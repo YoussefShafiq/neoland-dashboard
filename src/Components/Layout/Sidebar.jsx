@@ -74,11 +74,16 @@ export default function Sidebar() {
             path: '/finishings',
             icon: <RiAdminLine />,
         },
-        // {
-        //     title: 'Blogs',
-        //     path: '/blogs',
-        //     icon: <BsPostcard />,
-        // },
+        {
+            title: 'Projects',
+            path: '/projects',
+            icon: <RiAdminLine />,
+        },
+        {
+            title: 'Blogs',
+            path: '/blogs',
+            icon: <BsPostcard />,
+        },
 
     ]
     return <>

@@ -16,19 +16,21 @@ import Categories from './Components/Pages/Categories'
 import Locations from './Components/Pages/Locations'
 import Developers from './Components/Pages/Developers'
 import Finishings from './Components/Pages/Finishing'
+import Projects from './Components/Pages/Projects'
 
 function App() {
 
   const router = createBrowserRouter([
     { path: '/login', element: <Login /> },
     {
-      path: '/', element: <ProtectedRoute><Layout /></ProtectedRoute>, errorElement: <ErrorPage />, children: [
+      path: '/', element: <ProtectedRoute><Layout /></ProtectedRoute>, children: [
         { index: true, element: <ProtectedRoute><Home /></ProtectedRoute> },
         { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
         { path: '/categories', element: <ProtectedRoute><Categories /></ProtectedRoute> },
         { path: '/locations', element: <ProtectedRoute><Locations /></ProtectedRoute> },
         { path: '/developers', element: <ProtectedRoute><Developers /></ProtectedRoute> },
         { path: '/finishings', element: <ProtectedRoute><Finishings /></ProtectedRoute> },
+        { path: '/projects', element: <ProtectedRoute><Projects /></ProtectedRoute> },
         { path: '/blogs', element: <ProtectedRoute><Blogs /></ProtectedRoute> },
 
       ]

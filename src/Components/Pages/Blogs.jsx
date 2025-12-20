@@ -11,7 +11,7 @@ export default function Blogs() {
 
     function getAllBlogs() {
         return axios.get(
-            `https://nexus-consults.com/api/public/api/admin/blogs`,
+            `https://localhost:7086/api/v1/Blog/GetAllBlogs`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -43,7 +43,7 @@ export default function Blogs() {
 
             <h1 className="text-3xl font-bold text-gray-800 mb-8">Blogs</h1>
             <BlogsDataTable
-                blogs={blogs?.data?.data || []}
+                blogs={blogs?.data || []}
                 loading={isLoading}
                 refetch={refetch}
             />
