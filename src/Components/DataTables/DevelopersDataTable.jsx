@@ -12,35 +12,34 @@ import {
     FaChevronLeft,
     FaGlobeAmericas,
     FaGlobeAsia,
-    FaMapMarkerAlt,
     FaBuilding,
-    FaHome
+    FaCity,
+    FaHardHat
 } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import { XCircle } from 'lucide-react';
 
-export default function LocationsDataTable({ locations, loading, refetch }) {
+export default function DevelopersDataTable({ developers, loading, refetch }) {
     const navigate = useNavigate();
     const [filters, setFilters] = useState({
         global: '',
         arabic: '',
-        english: '',
-        name: ''
+        english: ''
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage] = useState(10);
-    const [deletingLocationId, setDeletingLocationId] = useState(null);
+    const [deletingDeveloperId, setDeletingDeveloperId] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [selectedDeveloper, setSelectedDeveloper] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [locationToDelete, setLocationToDelete] = useState(null);
-    const [updatingLocation, setUpdatingLocation] = useState(false);
+    const [developerToDelete, setDeveloperToDelete] = useState(null);
+    const [updatingDeveloper, setUpdatingDeveloper] = useState(false);
 
-    // Form states
+    // Form states - Note: API uses "DeveloperDescAR" not "developerDescAR"
     const [formData, setFormData] = useState({
-        locationDescAR: '',
-        locationDescEN: ''
+        DeveloperDescAR: '',
+        DeveloperDescEN: ''
     });
 
     const handleFilterChange = (field, value) => {
@@ -51,27 +50,39 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
         setCurrentPage(1);
     };
 
-    const handleDeleteClick = (locationId) => {
-        setLocationToDelete(locationId);
+    const { data: currentUser } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => {
+            return axios.get('https://localhost:7086/api/v1/User/GetCurrentUser',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+    })
+
+    const handleDeleteClick = (developerId) => {
+        setDeveloperToDelete(developerId);
         setShowDeleteConfirm(true);
     };
 
     const handleConfirmDelete = async () => {
-        if (!locationToDelete) return;
+        if (!developerToDelete) return;
 
-        setDeletingLocationId(locationToDelete);
+        setDeletingDeveloperId(developerToDelete);
         setShowDeleteConfirm(false);
 
         try {
             await axios.delete(
-                `https://localhost:7086/api/v1/Location/DeleteLocation/${locationToDelete}`,
+                `https://localhost:7086/api/v1/Developer/DeleteDeveloper/${developerToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            toast.success('Location deleted successfully', { duration: 2000 });
+            toast.success('Developer deleted successfully', { duration: 2000 });
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
@@ -83,8 +94,8 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                 toast.error('You are not authorized to perform this action')
             }
         } finally {
-            setDeletingLocationId(null);
-            setLocationToDelete(null);
+            setDeletingDeveloperId(null);
+            setDeveloperToDelete(null);
         }
     };
 
@@ -98,51 +109,49 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
 
     const resetForm = () => {
         setFormData({
-            locationDescAR: '',
-            locationDescEN: '',
+            DeveloperDescAR: '',
+            DeveloperDescEN: ''
         });
     };
 
-    const prepareEditForm = (location) => {
-        setSelectedLocation(location);
+    const prepareEditForm = (developer) => {
+        setSelectedDeveloper(developer);
         setFormData({
-            locationDescAR: location.locationDescAR,
-            locationDescEN: location.locationDescEN,
+            DeveloperDescAR: developer.developerDescAR,
+            DeveloperDescEN: developer.developerDescEN
         });
         setShowEditModal(true);
     };
 
-    const handleAddLocation = async (e) => {
+    const handleAddDeveloper = async (e) => {
         e.preventDefault();
 
-        if (!formData.locationDescAR.trim() || !formData.locationDescEN.trim()) {
+        if (!formData.DeveloperDescAR.trim() || !formData.DeveloperDescEN.trim()) {
             toast.error('Both Arabic and English descriptions are required', { duration: 3000 });
             return;
         }
 
-        setUpdatingLocation(true);
+        setUpdatingDeveloper(true);
         try {
-            const payload = {
-                locationDescAR: formData.locationDescAR,
-                locationDescEN: formData.locationDescEN
-            };
-
             await axios.post(
-                'https://localhost:7086/api/v1/Location/CreateLocation',
-                payload,
+                'https://localhost:7086/api/v1/Developer/CreateDeveloper',
+                {
+                    DeveloperDescAR: formData.DeveloperDescAR,
+                    DeveloperDescEN: formData.DeveloperDescEN
+                },
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            setUpdatingLocation(false);
-            toast.success('Location added successfully', { duration: 2000 });
+            setUpdatingDeveloper(false);
+            toast.success('Developer added successfully', { duration: 2000 });
             setShowAddModal(false);
             resetForm();
             refetch();
         } catch (error) {
-            setUpdatingLocation(false);
+            setUpdatingDeveloper(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
             if (error.response?.status === 401) {
                 localStorage.removeItem('userToken')
@@ -154,39 +163,35 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
         }
     };
 
-    const handleUpdateLocation = async (e) => {
+    const handleUpdateDeveloper = async (e) => {
         e.preventDefault();
 
-        if (!formData.locationDescAR.trim() || !formData.locationDescEN.trim()) {
+        if (!formData.DeveloperDescAR.trim() || !formData.DeveloperDescEN.trim()) {
             toast.error('Both Arabic and English descriptions are required', { duration: 3000 });
             return;
         }
 
-        setUpdatingLocation(true);
+        setUpdatingDeveloper(true);
         try {
-            const payload = {
-                locationID: selectedLocation.locationID,
-                locationDescAR: formData.locationDescAR,
-                locationDescEN: formData.locationDescEN
-            };
-
-
             await axios.put(
-                `https://localhost:7086/api/v1/Location/UpdateLocation/${selectedLocation.locationID}`,
-                payload,
+                `https://localhost:7086/api/v1/Developer/UpdateDeveloper/${selectedDeveloper.developerID}`,
+                {
+                    DeveloperDescAR: formData.DeveloperDescAR,
+                    DeveloperDescEN: formData.DeveloperDescEN
+                },
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            setUpdatingLocation(false);
-            toast.success('Location updated successfully', { duration: 2000 });
+            setUpdatingDeveloper(false);
+            toast.success('Developer updated successfully', { duration: 2000 });
             setShowEditModal(false);
             resetForm();
             refetch();
         } catch (error) {
-            setUpdatingLocation(false);
+            setUpdatingDeveloper(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
             if (error.response?.status === 401) {
                 localStorage.removeItem('userToken')
@@ -198,30 +203,28 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
         }
     };
 
-    // Filter locations based on all filter criteria
-    const filteredLocations = locations?.filter(location => {
+    // Filter developers based on all filter criteria
+    const filteredDevelopers = developers?.filter(developer => {
         return (
             (filters.global === '' ||
-                location.locationDescAR.includes(filters.global) ||
-                location.locationDescEN.toLowerCase().includes(filters.global.toLowerCase())) &&
+                developer.developerDescAR.includes(filters.global) ||
+                developer.developerDescEN.toLowerCase().includes(filters.global.toLowerCase())) &&
             (filters.arabic === '' ||
-                location.locationDescAR.includes(filters.arabic)) &&
+                developer.developerDescAR.includes(filters.arabic)) &&
             (filters.english === '' ||
-                location.locationDescEN.toLowerCase().includes(filters.english.toLowerCase()))
-            
+                developer.developerDescEN.toLowerCase().includes(filters.english.toLowerCase()))
         );
     }) || [];
 
     // Pagination logic
-    const totalPages = Math.ceil(filteredLocations.length / rowsPerPage);
-    const paginatedLocations = filteredLocations.slice(
+    const totalPages = Math.ceil(filteredDevelopers.length / rowsPerPage);
+    const paginatedDevelopers = filteredDevelopers.slice(
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
     );
 
-    // Count projects and units
-    const countProjects = (location) => location.projects?.length || 0;
-    const countUnits = (location) => location.units?.length || 0;
+    // Count projects
+    const countProjects = (developer) => developer.projects?.length || 0;
 
     const renderPagination = () => {
         if (totalPages <= 1) return null;
@@ -229,7 +232,7 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
         return (
             <div className="flex justify-between items-center mt-4 px-4 pb-1">
                 <div className='text-xs'>
-                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredLocations.length)} of {filteredLocations.length} entries
+                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredDevelopers.length)} of {filteredDevelopers.length} entries
                 </div>
                 <div className="flex gap-1">
                     <button
@@ -254,8 +257,8 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
         );
     };
 
-    // Check if current user has permission to manage locations
-    const canManageLocations = true;
+    // Check if current user has permission to manage developers
+    const canManageDevelopers = true;
 
     return (
         <div className="shadow-2xl rounded-2xl overflow-hidden bg-white">
@@ -265,16 +268,16 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                     type="text"
                     value={filters.global}
                     onChange={(e) => handleFilterChange('global', e.target.value)}
-                    placeholder="Search locations..."
+                    placeholder="Search developers..."
                     className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
                 />
-                {canManageLocations && (
+                {canManageDevelopers && (
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
                     >
                         <FaPlus size={18} />
-                        <span>Add Location</span>
+                        <span>Add Developer</span>
                     </button>
                 )}
             </div>
@@ -318,12 +321,6 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                 </div>
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <div className="flex items-center gap-2">
-                                    <FaHome />
-                                    <span>Units</span>
-                                </div>
-                            </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
@@ -331,61 +328,54 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="7" className="px-3 py-4 text-center">
+                                <td colSpan="5" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
-                                        Loading locations...
+                                        Loading developers...
                                     </div>
                                 </td>
                             </tr>
-                        ) : paginatedLocations.length === 0 ? (
+                        ) : paginatedDevelopers.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="px-3 py-4 text-center">
-                                    No locations found
+                                <td colSpan="5" className="px-3 py-4 text-center">
+                                    No developers found
                                 </td>
                             </tr>
                         ) : (
-                            paginatedLocations.map((location) => (
-                                <tr key={location.locationID} className="hover:bg-gray-50">
+                            paginatedDevelopers.map((developer) => (
+                                <tr key={developer.developerID} className="hover:bg-gray-50">
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        <div className="font-medium text-gray-900">#{location.locationID}</div>
+                                        <div className="font-medium text-gray-900">#{developer.developerID}</div>
                                     </td>
                                     <td className="px-3 py-4">
-                                        <div className="font-medium">{location.locationDescEN}</div>
+                                        <div className="font-medium">{developer.developerDescEN}</div>
                                     </td>
                                     <td className="px-3 py-4">
-                                        <div className="text-right font-arabic text-lg">{location.locationDescAR}</div>
+                                        <div className="text-right font-arabic text-lg">{developer.developerDescAR}</div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 text-sm font-semibold">
-                                                {countProjects(location)}
+                                                {countProjects(developer)}
                                             </span>
                                         </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
-                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-800 text-sm font-semibold">
-                                                {countUnits(location)}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            {canManageLocations && (
+                                            {canManageDevelopers && (
                                                 <>
                                                     <button
                                                         className="text-blue-500 hover:text-blue-700 p-1"
-                                                        onClick={() => prepareEditForm(location)}
+                                                        onClick={() => prepareEditForm(developer)}
                                                     >
                                                         <FaEdit size={18} />
                                                     </button>
                                                     <button
                                                         className="text-red-500 hover:text-red-700 p-1"
-                                                        onClick={() => handleDeleteClick(location.locationID)}
-                                                        disabled={deletingLocationId === location.locationID}
+                                                        onClick={() => handleDeleteClick(developer.developerID)}
+                                                        disabled={deletingDeveloperId === developer.developerID}
                                                     >
-                                                        {deletingLocationId === location.locationID ? (
+                                                        {deletingDeveloperId === developer.developerID ? (
                                                             <FaSpinner className="animate-spin" size={18} />
                                                         ) : (
                                                             <FaTrashAlt size={18} />
@@ -405,7 +395,7 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
             {/* Pagination */}
             {!loading && renderPagination()}
 
-            {/* Add Location Modal */}
+            {/* Add Developer Modal */}
             {showAddModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -423,12 +413,12 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 50, opacity: 0 }}
-                        className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                        className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
-                            <h2 className="text-xl font-bold mb-4">Add New Location</h2>
-                            <form onSubmit={handleAddLocation}>
+                            <h2 className="text-xl font-bold mb-4">Add New Developer</h2>
+                            <form onSubmit={handleAddDeveloper}>
                                 <div className="grid grid-cols-1 gap-6 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -438,14 +428,17 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                             </div>
                                         </label>
                                         <input
-                                            name="locationDescAR"
-                                            value={formData.locationDescAR}
+                                            name="DeveloperDescAR"
+                                            value={formData.DeveloperDescAR}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md text-right font-arabic text-lg"
                                             placeholder="أدخل الوصف باللغة العربية"
                                             required
                                             dir="rtl"
                                         />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            اسم المطور باللغة العربية
+                                        </p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -455,13 +448,16 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                             </div>
                                         </label>
                                         <input
-                                            name="locationDescEN"
-                                            value={formData.locationDescEN}
+                                            name="DeveloperDescEN"
+                                            value={formData.DeveloperDescEN}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             placeholder="Enter description in English"
                                             required
                                         />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Developer name in English
+                                        </p>
                                     </div>
                                 </div>
 
@@ -479,9 +475,9 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                     <button
                                         type="submit"
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                        disabled={updatingLocation}
+                                        disabled={updatingDeveloper}
                                     >
-                                        {updatingLocation ? (
+                                        {updatingDeveloper ? (
                                             <>
                                                 <FaSpinner className="animate-spin" size={18} />
                                                 <span>Adding...</span>
@@ -489,7 +485,7 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                         ) : (
                                             <>
                                                 <FaPlus size={18} />
-                                                <span>Add Location</span>
+                                                <span>Add Developer</span>
                                             </>
                                         )}
                                     </button>
@@ -500,7 +496,7 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                 </motion.div>
             )}
 
-            {/* Edit Location Modal */}
+            {/* Edit Developer Modal */}
             {showEditModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -518,12 +514,12 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 50, opacity: 0 }}
-                        className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                        className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
-                            <h2 className="text-xl font-bold mb-4">Edit Location</h2>
-                            <form onSubmit={handleUpdateLocation}>
+                            <h2 className="text-xl font-bold mb-4">Edit Developer</h2>
+                            <form onSubmit={handleUpdateDeveloper}>
                                 <div className="grid grid-cols-1 gap-6 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -533,13 +529,16 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                             </div>
                                         </label>
                                         <input
-                                            name="locationDescAR"
-                                            value={formData.locationDescAR}
+                                            name="DeveloperDescAR"
+                                            value={formData.DeveloperDescAR}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md text-right font-arabic text-lg"
                                             required
                                             dir="rtl"
                                         />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            اسم المطور باللغة العربية
+                                        </p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -549,12 +548,15 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                             </div>
                                         </label>
                                         <input
-                                            name="locationDescEN"
-                                            value={formData.locationDescEN}
+                                            name="DeveloperDescEN"
+                                            value={formData.DeveloperDescEN}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
                                         />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Developer name in English
+                                        </p>
                                     </div>
                                 </div>
 
@@ -572,9 +574,9 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                     <button
                                         type="submit"
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                        disabled={updatingLocation}
+                                        disabled={updatingDeveloper}
                                     >
-                                        {updatingLocation ? (
+                                        {updatingDeveloper ? (
                                             <>
                                                 <FaSpinner className="animate-spin" size={18} />
                                                 <span>Updating...</span>
@@ -582,7 +584,7 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                         ) : (
                                             <>
                                                 <FaEdit size={18} />
-                                                <span>Update Location</span>
+                                                <span>Update Developer</span>
                                             </>
                                         )}
                                     </button>
@@ -615,32 +617,23 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                     <FaTrashAlt className="h-5 w-5 text-red-600" />
                                 </div>
                                 <div className="ml-4">
-                                    <h3 className="text-lg font-medium text-gray-900">Delete Location</h3>
+                                    <h3 className="text-lg font-medium text-gray-900">Delete Developer</h3>
                                     <div className="mt-2">
                                         <p className="text-sm text-gray-500">
-                                            Are you sure you want to delete this location? This action cannot be undone.
+                                            Are you sure you want to delete this developer? This action cannot be undone.
                                         </p>
-                                        {selectedLocation && (
+                                        {selectedDeveloper && (
                                             <div className="mt-3 p-3 bg-gray-50 rounded">
-                                                <p className="text-sm font-medium text-gray-700">Location Details:</p>
+                                                <p className="text-sm font-medium text-gray-700">Developer Details:</p>
                                                 <p className="text-sm text-gray-600 mt-1">
-                                                    <span className="font-arabic">{selectedLocation.locationDescAR}</span>
+                                                    <span className="font-arabic">{selectedDeveloper.developerDescAR}</span>
                                                     <span className="mx-2">•</span>
-                                                    <span>{selectedLocation.locationDescEN}</span>
+                                                    <span>{selectedDeveloper.developerDescEN}</span>
                                                 </p>
-                                                {(countProjects(selectedLocation) > 0 || countUnits(selectedLocation) > 0) && (
-                                                    <div className="mt-2 space-y-1">
-                                                        {countProjects(selectedLocation) > 0 && (
-                                                            <p className="text-sm text-yellow-600">
-                                                                ⚠️ This location has {countProjects(selectedLocation)} project(s) associated with it.
-                                                            </p>
-                                                        )}
-                                                        {countUnits(selectedLocation) > 0 && (
-                                                            <p className="text-sm text-yellow-600">
-                                                                ⚠️ This location has {countUnits(selectedLocation)} unit(s) associated with it.
-                                                            </p>
-                                                        )}
-                                                    </div>
+                                                {countProjects(selectedDeveloper) > 0 && (
+                                                    <p className="text-sm text-yellow-600 mt-2">
+                                                        ⚠️ This developer has {countProjects(selectedDeveloper)} project(s) associated with it.
+                                                    </p>
                                                 )}
                                             </div>
                                         )}
@@ -659,9 +652,9 @@ export default function LocationsDataTable({ locations, loading, refetch }) {
                                     type="button"
                                     onClick={handleConfirmDelete}
                                     className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                                    disabled={deletingLocationId}
+                                    disabled={deletingDeveloperId}
                                 >
-                                    {deletingLocationId ? (
+                                    {deletingDeveloperId ? (
                                         <>
                                             <FaSpinner className="animate-spin inline mr-2" />
                                             Deleting...

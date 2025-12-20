@@ -64,6 +64,16 @@ export default function Sidebar() {
             path: '/locations',
             icon: <RiAdminLine />,
         },
+        {
+            title: 'Developers',
+            path: '/developers',
+            icon: <RiAdminLine />,
+        },
+        {
+            title: 'Finishings',
+            path: '/finishings',
+            icon: <RiAdminLine />,
+        },
         // {
         //     title: 'Blogs',
         //     path: '/blogs',

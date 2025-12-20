@@ -11,10 +11,11 @@ import Notfound from './Components/Notfound'
 import Home from './Components/Pages/Home'
 import Admins from './Components/Pages/Admins'
 import Blogs from './Components/Pages/Blogs'
-import UserSetting from './Components/Pages/UserSetting'
 import ErrorPage from './Components/errorHandling/ErrorPage'
 import Categories from './Components/Pages/Categories'
 import Locations from './Components/Pages/Locations'
+import Developers from './Components/Pages/Developers'
+import Finishings from './Components/Pages/Finishing'
 
 function App() {
 
@@ -26,7 +27,8 @@ function App() {
         { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
         { path: '/categories', element: <ProtectedRoute><Categories /></ProtectedRoute> },
         { path: '/locations', element: <ProtectedRoute><Locations /></ProtectedRoute> },
-        { path: '/user-setting', element: <ProtectedRoute><UserSetting /></ProtectedRoute> },
+        { path: '/developers', element: <ProtectedRoute><Developers /></ProtectedRoute> },
+        { path: '/finishings', element: <ProtectedRoute><Finishings /></ProtectedRoute> },
         { path: '/blogs', element: <ProtectedRoute><Blogs /></ProtectedRoute> },
 
       ]
