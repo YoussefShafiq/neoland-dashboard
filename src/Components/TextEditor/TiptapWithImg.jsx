@@ -1253,7 +1253,7 @@ const MenuBar = ({ uploadImgUrl = '', uploadVideoUrl = 'https://api.nexus.com/ap
                 >
                     <UnderlineIcon size={16} />
                 </button>
-                <button
+                {/* <button
                     onClick={(e) => {
                         e.preventDefault();
                         editor.chain().focus().toggleDynamicDate().run();
@@ -1263,7 +1263,7 @@ const MenuBar = ({ uploadImgUrl = '', uploadVideoUrl = 'https://api.nexus.com/ap
                     title="Dynamic Date"
                 >
                     <Calendar size={16} />
-                </button>
+                </button> */}
             </div>
 
             <div className="toolbar-divider" />
@@ -1485,7 +1485,7 @@ const MenuBar = ({ uploadImgUrl = '', uploadVideoUrl = 'https://api.nexus.com/ap
 
             <div className="toolbar-divider" />
 
-            <div className="toolbar-group">
+            {/* <div className="toolbar-group">
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -1505,12 +1505,12 @@ const MenuBar = ({ uploadImgUrl = '', uploadVideoUrl = 'https://api.nexus.com/ap
                 >
                     {isUploading ? 'Uploading...' : <ImageIcon size={16} />}
                 </button>
-            </div>
+            </div> */}
 
             <div className="toolbar-divider" />
 
             <div className="toolbar-group">
-                <input
+                {/* <input
                     type="file"
                     ref={videoFileInputRef}
                     onChange={handleVideoUpload}
@@ -1528,7 +1528,7 @@ const MenuBar = ({ uploadImgUrl = '', uploadVideoUrl = 'https://api.nexus.com/ap
                     className={isVideoUploading ? 'is-uploading' : ''}
                 >
                     {isVideoUploading ? 'Uploading...' : <Video size={16} />}
-                </button>
+                </button> */}
                 <button
                     onClick={(e) => {
                         e.preventDefault();

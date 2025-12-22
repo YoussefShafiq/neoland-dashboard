@@ -80,6 +80,11 @@ export default function Sidebar() {
             icon: <RiAdminLine />,
         },
         {
+            title: 'Units',
+            path: '/units',
+            icon: <RiAdminLine />,
+        },
+        {
             title: 'Blogs',
             path: '/blogs',
             icon: <BsPostcard />,

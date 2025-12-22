@@ -5,23 +5,22 @@ import { useNavigate } from 'react-router-dom';
 import CategoriesDataTable from '../DataTables/CategoriesDataTable';
 import toast from 'react-hot-toast';
 
-export default function Categories () {
+export default function Categories() {
     const navigate = useNavigate();
 
-    function getCategoriesData() {
-        return axios.get(
-            `https://localhost:7086/api/v1/Category/GetAllCategories`,
-            {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('userToken')}`
-                }
-            }
-        );
-    }
 
     const { data: categories, isLoading, refetch, error, isError } = useQuery({
         queryKey: ['categories'],
-        queryFn: getCategoriesData,
+        queryFn: () => {
+            return axios.get(
+                `https://localhost:7086/api/v1/Category/GetAllCategories`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+        },
     })
 
     useEffect(() => {

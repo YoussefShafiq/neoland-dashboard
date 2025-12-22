@@ -17,6 +17,7 @@ import Locations from './Components/Pages/Locations'
 import Developers from './Components/Pages/Developers'
 import Finishings from './Components/Pages/Finishing'
 import Projects from './Components/Pages/Projects'
+import Units from './Components/Pages/Units'
 
 function App() {
 
@@ -31,6 +32,7 @@ function App() {
         { path: '/developers', element: <ProtectedRoute><Developers /></ProtectedRoute> },
         { path: '/finishings', element: <ProtectedRoute><Finishings /></ProtectedRoute> },
         { path: '/projects', element: <ProtectedRoute><Projects /></ProtectedRoute> },
+        { path: '/units', element: <ProtectedRoute><Units /></ProtectedRoute> },
         { path: '/blogs', element: <ProtectedRoute><Blogs /></ProtectedRoute> },
 
       ]

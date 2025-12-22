@@ -20,7 +20,7 @@ export default function Login() {
                 duration: 2000,
             })
             localStorage.setItem('userToken', data.token)
-            localStorage.setItem('userId', 1)
+            localStorage.setItem('userId', data.userID)
             navigate('/')
 
         } catch (error) {

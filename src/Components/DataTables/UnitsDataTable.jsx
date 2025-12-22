@@ -15,96 +15,79 @@ import {
     FaMapMarkerAlt,
     FaBuilding,
     FaCity,
-    FaFire,
+    FaHome,
     FaCalendarAlt,
     FaMoneyBillWave,
-    FaGlobeAsia,
-    FaGlobeAmericas,
-    FaLink,
+    FaBed,
     FaCheck,
-    FaTimes
+    FaTimes,
+    FaLayerGroup,
+    FaPaintRoller
 } from 'react-icons/fa';
-import { useQuery } from '@tanstack/react-query';
 import { XCircle } from 'lucide-react';
 
-export default function ProjectsDataTable({ projects, loading, refetch }) {
+export default function UnitsDataTable({ 
+    units, 
+    locations, 
+    projects, 
+    categories, 
+    finishings, 
+    loading, 
+    refetch 
+}) {
     const navigate = useNavigate();
     const [filters, setFilters] = useState({
         global: '',
         arabic: '',
         english: '',
         location: '',
-        developer: '',
-        hotDeal: ''
+        project: '',
+        category: '',
+        finishing: '',
+        minPrice: '',
+        maxPrice: '',
+        bedrooms: ''
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage] = useState(10);
-    const [deletingProjectId, setDeletingProjectId] = useState(null);
+    const [deletingUnitId, setDeletingUnitId] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedProject, setSelectedProject] = useState(null);
+    const [selectedUnit, setSelectedUnit] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [projectToDelete, setProjectToDelete] = useState(null);
-    const [updatingProject, setUpdatingProject] = useState(false);
+    const [unitToDelete, setUnitToDelete] = useState(null);
+    const [updatingUnit, setUpdatingUnit] = useState(false);
     const [showPreviewModal, setShowPreviewModal] = useState(false);
-    const [previewProject, setPreviewProject] = useState(null);
+    const [previewUnit, setPreviewUnit] = useState(null);
 
     // Form states
     const [formData, setFormData] = useState({
-        ProjectDescAr: '',
-        ProjectDescEn: '',
-        ProjectImage: null,
-        Flag: false,
-        InstallmentPeriod: '',
-        ActualLocation: '',
+        ProjectId: '',
+        CategoryId: '',
+        UnitImage: null,
         LocationId: '',
-        DeveloperId: ''
+        FinishingStatusId: '',
+        UnitDescriptionAR: '',
+        UnitDescriptionEN: '',
+        NumberOfBedrooms: '',
+        StartingPrice: '',
+        DeliveryDate: ''
     });
 
     const [editFormData, setEditFormData] = useState({
-        projectID: null,
-        ProjectDescAr: '',
-        ProjectDescEn: '',
-        ProjectImage: null,
+        unitId: null,
+        ProjectId: '',
+        CategoryId: '',
+        UnitImage: null,
         existingImage: null,
-        Flag: false,
-        InstallmentPeriod: '',
-        ActualLocation: '',
         LocationId: '',
-        DeveloperId: ''
+        FinishingStatusId: '',
+        UnitDescriptionAR: '',
+        UnitDescriptionEN: '',
+        NumberOfBedrooms: '',
+        StartingPrice: '',
+        DeliveryDate: ''
     });
-
-    // Fetch locations and developers
-    const { data: locationsData, isLoading: locationsLoading } = useQuery({
-        queryKey: ['locations'],
-        queryFn: () => {
-            return axios.get(
-                `https://localhost:7086/api/v1/Location/GetAllLocations`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
-                    }
-                }
-            );
-        },
-    });
-
-    const { data: developersData, isLoading: developersLoading } = useQuery({
-        queryKey: ['developers'],
-        queryFn: () => {
-            return axios.get(
-                `https://localhost:7086/api/v1/Developer/GetAllDevelopers`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
-                    }
-                }
-            );
-        },
-    });
-
-    const locations = locationsData?.data || [];
-    const developers = developersData?.data || [];
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => ({
@@ -114,27 +97,27 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         setCurrentPage(1);
     };
 
-    const handleDeleteClick = (projectId) => {
-        setProjectToDelete(projectId);
+    const handleDeleteClick = (unitId) => {
+        setUnitToDelete(unitId);
         setShowDeleteConfirm(true);
     };
 
     const handleConfirmDelete = async () => {
-        if (!projectToDelete) return;
+        if (!unitToDelete) return;
 
-        setDeletingProjectId(projectToDelete);
+        setDeletingUnitId(unitToDelete);
         setShowDeleteConfirm(false);
 
         try {
             await axios.delete(
-                `https://localhost:7086/api/v1/Project/DeleteProject/${projectToDelete}`,
+                `https://localhost:7086/api/v1/Unit/DeleteUnit/${unitToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            toast.success('Project deleted successfully', { duration: 2000 });
+            toast.success('Unit deleted successfully', { duration: 2000 });
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
@@ -146,23 +129,18 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 toast.error('You are not authorized to perform this action')
             }
         } finally {
-            setDeletingProjectId(null);
-            setProjectToDelete(null);
+            setDeletingUnitId(null);
+            setUnitToDelete(null);
         }
     };
 
     const handleFormChange = (e) => {
-        const { name, value, type, checked, files } = e.target;
+        const { name, value, type, files } = e.target;
 
         if (type === 'file') {
             setFormData(prev => ({
                 ...prev,
                 [name]: files[0]
-            }));
-        } else if (type === 'checkbox') {
-            setFormData(prev => ({
-                ...prev,
-                [name]: checked
             }));
         } else {
             setFormData(prev => ({
@@ -173,17 +151,12 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     };
 
     const handleEditFormChange = (e) => {
-        const { name, value, type, checked, files } = e.target;
+        const { name, value, type, files } = e.target;
 
         if (type === 'file') {
             setEditFormData(prev => ({
                 ...prev,
                 [name]: files[0]
-            }));
-        } else if (type === 'checkbox') {
-            setEditFormData(prev => ({
-                ...prev,
-                [name]: checked
             }));
         } else {
             setEditFormData(prev => ({
@@ -195,45 +168,62 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
 
     const resetForm = () => {
         setFormData({
-            ProjectDescAr: '',
-            ProjectDescEn: '',
-            ProjectImage: null,
-            Flag: false,
-            InstallmentPeriod: '',
-            ActualLocation: '',
+            ProjectId: '',
+            CategoryId: '',
+            UnitImage: null,
             LocationId: '',
-            DeveloperId: ''
+            FinishingStatusId: '',
+            UnitDescriptionAR: '',
+            UnitDescriptionEN: '',
+            NumberOfBedrooms: '',
+            StartingPrice: '',
+            DeliveryDate: ''
         });
     };
 
-    const prepareEditForm = (project) => {
-        setSelectedProject(project);
+    const prepareEditForm = (unit) => {
+        setSelectedUnit(unit);
         setEditFormData({
-            projectID: project.projectID,
-            ProjectDescAr: project.projectDescAr,
-            ProjectDescEn: project.projectDescEn,
-            ProjectImage: null,
-            existingImage: project.projectImagePath,
-            Flag: project.flag,
-            InstallmentPeriod: project.installmentPeriod || '',
-            ActualLocation: project.actualLocation || '',
-            LocationId: project.locationId,
-            DeveloperId: project.developerId
+            unitId: unit.unitId,
+            ProjectId: unit.projectId,
+            CategoryId: unit.categoryId,
+            UnitImage: null,
+            existingImage: unit.unitImagePath,
+            LocationId: unit.locationId,
+            FinishingStatusId: unit.finishingStatusId,
+            UnitDescriptionAR: unit.unitDescriptionAR,
+            UnitDescriptionEN: unit.unitDescriptionEN,
+            NumberOfBedrooms: unit.numberOfBedrooms,
+            StartingPrice: unit.startingPrice,
+            DeliveryDate: unit.deliveryDate
         });
         setShowEditModal(true);
     };
 
-    const handleAddProject = async (e) => {
+    const formatPrice = (price) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            maximumFractionDigits: 0
+        }).format(price);
+    };
+
+    const handleAddUnit = async (e) => {
         e.preventDefault();
 
         // Validation
-        if (!formData.ProjectDescAr.trim() || !formData.ProjectDescEn.trim()) {
-            toast.error('Arabic and English descriptions are required', { duration: 3000 });
+        if (!formData.ProjectId) {
+            toast.error('Please select a project', { duration: 3000 });
             return;
         }
 
-        if (!formData.ProjectImage) {
-            toast.error('Project image is required', { duration: 3000 });
+        if (!formData.CategoryId) {
+            toast.error('Please select a category', { duration: 3000 });
+            return;
+        }
+
+        if (!formData.UnitImage) {
+            toast.error('Unit image is required', { duration: 3000 });
             return;
         }
 
@@ -242,33 +232,50 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             return;
         }
 
-        if (!formData.DeveloperId) {
-            toast.error('Please select a developer', { duration: 3000 });
+        if (!formData.FinishingStatusId) {
+            toast.error('Please select a finishing status', { duration: 3000 });
             return;
         }
 
-        if (!formData.InstallmentPeriod || formData.InstallmentPeriod <= 0) {
-            toast.error('Please enter a valid installment period (years)', { duration: 3000 });
+        if (!formData.UnitDescriptionAR.trim() || !formData.UnitDescriptionEN.trim()) {
+            toast.error('Arabic and English descriptions are required', { duration: 3000 });
             return;
         }
 
-        setUpdatingProject(true);
+        if (!formData.NumberOfBedrooms || formData.NumberOfBedrooms < 0) {
+            toast.error('Please enter a valid number of bedrooms', { duration: 3000 });
+            return;
+        }
+
+        if (!formData.StartingPrice || formData.StartingPrice <= 0) {
+            toast.error('Please enter a valid starting price', { duration: 3000 });
+            return;
+        }
+
+        if (!formData.DeliveryDate || formData.DeliveryDate <= 0) {
+            toast.error('Please enter a valid delivery date (years)', { duration: 3000 });
+            return;
+        }
+
+        setUpdatingUnit(true);
         try {
             const formDataToSend = new FormData();
-            formDataToSend.append('ProjectDescAr', formData.ProjectDescAr);
-            formDataToSend.append('ProjectDescEn', formData.ProjectDescEn);
-            formDataToSend.append('Flag', formData.Flag);
-            formDataToSend.append('InstallmentPeriod', formData.InstallmentPeriod);
-            formDataToSend.append('ActualLocation', formData.ActualLocation);
+            formDataToSend.append('ProjectId', formData.ProjectId);
+            formDataToSend.append('CategoryId', formData.CategoryId);
             formDataToSend.append('LocationId', formData.LocationId);
-            formDataToSend.append('DeveloperId', formData.DeveloperId);
+            formDataToSend.append('FinishingStatusId', formData.FinishingStatusId);
+            formDataToSend.append('UnitDescriptionAR', formData.UnitDescriptionAR);
+            formDataToSend.append('UnitDescriptionEN', formData.UnitDescriptionEN);
+            formDataToSend.append('NumberOfBedrooms', formData.NumberOfBedrooms);
+            formDataToSend.append('StartingPrice', formData.StartingPrice);
+            formDataToSend.append('DeliveryDate', formData.DeliveryDate);
             
-            if (formData.ProjectImage) {
-                formDataToSend.append('ProjectImage', formData.ProjectImage);
+            if (formData.UnitImage) {
+                formDataToSend.append('UnitImage', formData.UnitImage);
             }
 
             await axios.post(
-                'https://localhost:7086/api/v1/Project/CreateProject',
+                'https://localhost:7086/api/v1/Unit/CreateUnit',
                 formDataToSend,
                 {
                     headers: {
@@ -277,13 +284,13 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                     }
                 }
             );
-            setUpdatingProject(false);
-            toast.success('Project added successfully', { duration: 2000 });
+            setUpdatingUnit(false);
+            toast.success('Unit added successfully', { duration: 2000 });
             setShowAddModal(false);
             resetForm();
             refetch();
         } catch (error) {
-            setUpdatingProject(false);
+            setUpdatingUnit(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
             if (error.response?.status === 401) {
                 localStorage.removeItem('userToken')
@@ -295,12 +302,17 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         }
     };
 
-    const handleUpdateProject = async (e) => {
+    const handleUpdateUnit = async (e) => {
         e.preventDefault();
 
         // Validation
-        if (!editFormData.ProjectDescAr.trim() || !editFormData.ProjectDescEn.trim()) {
-            toast.error('Arabic and English descriptions are required', { duration: 3000 });
+        if (!editFormData.ProjectId) {
+            toast.error('Please select a project', { duration: 3000 });
+            return;
+        }
+
+        if (!editFormData.CategoryId) {
+            toast.error('Please select a category', { duration: 3000 });
             return;
         }
 
@@ -309,30 +321,47 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             return;
         }
 
-        if (!editFormData.DeveloperId) {
-            toast.error('Please select a developer', { duration: 3000 });
+        if (!editFormData.FinishingStatusId) {
+            toast.error('Please select a finishing status', { duration: 3000 });
             return;
         }
 
-        if (!editFormData.InstallmentPeriod || editFormData.InstallmentPeriod <= 0) {
-            toast.error('Please enter a valid installment period (years)', { duration: 3000 });
+        if (!editFormData.UnitDescriptionAR.trim() || !editFormData.UnitDescriptionEN.trim()) {
+            toast.error('Arabic and English descriptions are required', { duration: 3000 });
             return;
         }
 
-        setUpdatingProject(true);
+        if (!editFormData.NumberOfBedrooms || editFormData.NumberOfBedrooms < 0) {
+            toast.error('Please enter a valid number of bedrooms', { duration: 3000 });
+            return;
+        }
+
+        if (!editFormData.StartingPrice || editFormData.StartingPrice <= 0) {
+            toast.error('Please enter a valid starting price', { duration: 3000 });
+            return;
+        }
+
+        if (!editFormData.DeliveryDate || editFormData.DeliveryDate <= 0) {
+            toast.error('Please enter a valid delivery date (years)', { duration: 3000 });
+            return;
+        }
+
+        setUpdatingUnit(true);
         try {
             const formDataToSend = new FormData();
-            formDataToSend.append('ProjectDescAr', editFormData.ProjectDescAr);
-            formDataToSend.append('ProjectDescEn', editFormData.ProjectDescEn);
-            formDataToSend.append('Flag', editFormData.Flag);
-            formDataToSend.append('InstallmentPeriod', editFormData.InstallmentPeriod);
-            formDataToSend.append('ActualLocation', editFormData.ActualLocation);
+            formDataToSend.append('ProjectId', editFormData.ProjectId);
+            formDataToSend.append('CategoryId', editFormData.CategoryId);
             formDataToSend.append('LocationId', editFormData.LocationId);
-            formDataToSend.append('DeveloperId', editFormData.DeveloperId);
+            formDataToSend.append('FinishingStatusId', editFormData.FinishingStatusId);
+            formDataToSend.append('UnitDescriptionAR', editFormData.UnitDescriptionAR);
+            formDataToSend.append('UnitDescriptionEN', editFormData.UnitDescriptionEN);
+            formDataToSend.append('NumberOfBedrooms', editFormData.NumberOfBedrooms);
+            formDataToSend.append('StartingPrice', editFormData.StartingPrice);
+            formDataToSend.append('DeliveryDate', editFormData.DeliveryDate);
             
             // Always send an image - either new or existing
-            if (editFormData.ProjectImage) {
-                formDataToSend.append('ProjectImage', editFormData.ProjectImage);
+            if (editFormData.UnitImage) {
+                formDataToSend.append('UnitImage', editFormData.UnitImage);
             } else if (editFormData.existingImage) {
                 // Convert existing image URL to File object
                 try {
@@ -340,18 +369,18 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                     const response = await fetch(fullImageUrl);
                     const blob = await response.blob();
                     const file = new File([blob], 'existing-image.jpg', { type: blob.type });
-                    formDataToSend.append('ProjectImage', file);
+                    formDataToSend.append('UnitImage', file);
                 } catch (error) {
                     console.error('Error converting existing image:', error);
                     // Create a placeholder file if conversion fails
                     const blob = new Blob([''], { type: 'image/jpeg' });
                     const file = new File([blob], 'placeholder.jpg', { type: 'image/jpeg' });
-                    formDataToSend.append('ProjectImage', file);
+                    formDataToSend.append('UnitImage', file);
                 }
             }
 
             await axios.put(
-                `https://localhost:7086/api/v1/Project/UpdateProject/${editFormData.projectID}`,
+                `https://localhost:7086/api/v1/Unit/UpdateUnit/${editFormData.unitId}`,
                 formDataToSend,
                 {
                     headers: {
@@ -360,12 +389,12 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                     }
                 }
             );
-            setUpdatingProject(false);
-            toast.success('Project updated successfully', { duration: 2000 });
+            setUpdatingUnit(false);
+            toast.success('Unit updated successfully', { duration: 2000 });
             setShowEditModal(false);
             refetch();
         } catch (error) {
-            setUpdatingProject(false);
+            setUpdatingUnit(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
             if (error.response?.status === 401) {
                 localStorage.removeItem('userToken')
@@ -377,38 +406,50 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         }
     };
 
-    // Filter projects based on all filter criteria
-    const filteredProjects = projects?.filter(project => {
+    // Filter units based on all filter criteria
+    const filteredUnits = units?.filter(unit => {
         const matchesGlobal =
             filters.global === '' ||
-            project.projectDescAr.includes(filters.global) ||
-            project.projectDescEn.toLowerCase().includes(filters.global.toLowerCase()) ||
-            project.locationNameAR.includes(filters.global) ||
-            project.developerNameAR.includes(filters.global);
+            unit.unitDescriptionAR.includes(filters.global) ||
+            unit.unitDescriptionEN.toLowerCase().includes(filters.global.toLowerCase()) ||
+            unit.projectDescEN.toLowerCase().includes(filters.global.toLowerCase()) ||
+            unit.categoryDescEN.toLowerCase().includes(filters.global.toLowerCase());
 
         const matchesArabic = filters.arabic === '' ||
-            project.projectDescAr.includes(filters.arabic);
+            unit.unitDescriptionAR.includes(filters.arabic);
         
         const matchesEnglish = filters.english === '' ||
-            project.projectDescEn.toLowerCase().includes(filters.english.toLowerCase());
+            unit.unitDescriptionEN.toLowerCase().includes(filters.english.toLowerCase());
         
         const matchesLocation = filters.location === '' ||
-            project.locationId.toString() === filters.location;
+            unit.locationId.toString() === filters.location;
         
-        const matchesDeveloper = filters.developer === '' ||
-            project.developerId.toString() === filters.developer;
+        const matchesProject = filters.project === '' ||
+            unit.projectId.toString() === filters.project;
         
-        const matchesHotDeal = filters.hotDeal === '' ||
-            (filters.hotDeal === 'hot' && project.flag) ||
-            (filters.hotDeal === 'normal' && !project.flag);
+        const matchesCategory = filters.category === '' ||
+            unit.categoryId.toString() === filters.category;
+        
+        const matchesFinishing = filters.finishing === '' ||
+            unit.finishingStatusId.toString() === filters.finishing;
+        
+        const matchesMinPrice = filters.minPrice === '' ||
+            unit.startingPrice >= parseFloat(filters.minPrice);
+        
+        const matchesMaxPrice = filters.maxPrice === '' ||
+            unit.startingPrice <= parseFloat(filters.maxPrice);
+        
+        const matchesBedrooms = filters.bedrooms === '' ||
+            unit.numberOfBedrooms.toString() === filters.bedrooms;
 
         return matchesGlobal && matchesArabic && matchesEnglish && matchesLocation && 
-               matchesDeveloper && matchesHotDeal;
+               matchesProject && matchesCategory && matchesFinishing &&
+               matchesMinPrice && matchesMaxPrice && matchesBedrooms;
     }) || [];
 
     // Pagination logic
-    const totalPages = Math.ceil(filteredProjects.length / rowsPerPage);
-    const paginatedProjects = filteredProjects.slice(
+    const totalPages = Math.ceil(filteredUnits.length / rowsPerPage);
+    const paginatedUnits = filteredUnits.slice(
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
     );
@@ -419,7 +460,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         return (
             <div className="flex justify-between items-center mt-4 px-4 pb-1">
                 <div className='text-xs'>
-                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredProjects.length)} of {filteredProjects.length} entries
+                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredUnits.length)} of {filteredUnits.length} entries
                 </div>
                 <div className="flex gap-1">
                     <button
@@ -444,12 +485,12 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         );
     };
 
-    // Check if current user has permission to manage projects
-    const canManageProjects = true;
+    // Check if current user has permission to manage units
+    const canManageUnits = true;
 
     // Preview modal
-    const PreviewModal = ({ project, onClose }) => {
-        if (!project) return null;
+    const PreviewModal = ({ unit, onClose }) => {
+        if (!unit) return null;
 
         return (
             <motion.div
@@ -468,7 +509,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 >
                     <div className="p-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">Project Preview</h2>
+                            <h2 className="text-2xl font-bold text-gray-800">Unit Preview</h2>
                             <button
                                 onClick={onClose}
                                 className="text-gray-500 hover:text-gray-700"
@@ -478,109 +519,113 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                         </div>
 
                         <div className="space-y-6">
-                            {/* Project Image */}
-                            {project.projectImagePath && (
+                            {/* Unit Image */}
+                            {unit.unitImagePath && (
                                 <div className="mb-6">
                                     <img
-                                        src={`https://localhost:7086${project.projectImagePath}`}
-                                        alt={project.projectDescEn}
+                                        src={`https://localhost:7086${unit.unitImagePath}`}
+                                        alt={unit.unitDescriptionEN}
                                         className="w-full h-64 object-cover rounded-lg"
                                     />
                                 </div>
                             )}
 
-                            {/* Project Details */}
+                            {/* Unit Details */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                                        <FaGlobeAsia />
+                                    <h3 className="text-lg font-semibold mb-2">
                                         Arabic Description
                                     </h3>
-                                    <p className="text-right font-arabic text-xl">{project.projectDescAr}</p>
+                                    <p className="text-right font-arabic text-xl">{unit.unitDescriptionAR}</p>
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                                        <FaGlobeAmericas />
+                                    <h3 className="text-lg font-semibold mb-2">
                                         English Description
                                     </h3>
-                                    <p className="text-lg">{project.projectDescEn}</p>
+                                    <p className="text-lg">{unit.unitDescriptionEN}</p>
                                 </div>
                             </div>
 
+                            {/* Project & Location */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                                        <FaCity />
-                                        Location
-                                    </h3>
-                                    <div className="space-y-1">
-                                        <p className="text-right font-arabic">{project.locationNameAR}</p>
-                                        <p className="text-gray-600">{project.locationNameEN}</p>
-                                    </div>
-                                </div>
                                 <div>
                                     <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
                                         <FaBuilding />
-                                        Developer
+                                        Project
                                     </h3>
                                     <div className="space-y-1">
-                                        <p className="text-right font-arabic">{project.developerNameAR}</p>
-                                        <p className="text-gray-600">{project.developerNameEN}</p>
+                                        <p className="text-right font-arabic">{unit.projectDescAR}</p>
+                                        <p className="text-gray-600">{unit.projectDescEN}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                                        <FaMapMarkerAlt />
+                                        Location
+                                    </h3>
+                                    <div className="space-y-1">
+                                        <p className="text-right font-arabic">{unit.locationDescAR}</p>
+                                        <p className="text-gray-600">{unit.locationDescEN}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Additional Details */}
+                            {/* Category & Finishing */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                                        <FaHome />
+                                        Category
+                                    </h3>
+                                    <div className="space-y-1">
+                                        <p className="text-right font-arabic">{unit.categoryDescAR}</p>
+                                        <p className="text-gray-600">{unit.categoryDescEN}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                                        <FaPaintRoller />
+                                        Finishing Status
+                                    </h3>
+                                    <div className="space-y-1">
+                                        <p className="text-right font-arabic">{unit.finishingStatusDescAR}</p>
+                                        <p className="text-gray-600">{unit.finishingStatusDescEN}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Specifications */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <FaFire className={project.flag ? "text-red-500" : "text-gray-400"} />
-                                        <span className="font-medium">Hot Deal</span>
+                                        <FaBed className="text-blue-500" />
+                                        <span className="font-medium">Bedrooms</span>
                                     </div>
-                                    <p className={project.flag ? "text-green-600 font-semibold" : "text-gray-600"}>
-                                        {project.flag ? "Yes" : "No"}
-                                    </p>
-                                </div>
-
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <FaCalendarAlt className="text-blue-500" />
-                                        <span className="font-medium">Installment Period</span>
-                                    </div>
-                                    <p className="text-gray-800 font-semibold">
-                                        {project.installmentPeriod} years
+                                    <p className="text-gray-800 font-semibold text-xl">
+                                        {unit.numberOfBedrooms}
                                     </p>
                                 </div>
 
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <div className="flex items-center gap-2 mb-2">
                                         <FaMoneyBillWave className="text-green-500" />
-                                        <span className="font-medium">Down Payment</span>
+                                        <span className="font-medium">Starting Price</span>
                                     </div>
-                                    <p className="text-gray-800 font-semibold">
-                                        {project.downPayment ? `$${project.downPayment.toLocaleString()}` : 'Not specified'}
+                                    <p className="text-gray-800 font-semibold text-xl">
+                                        {formatPrice(unit.startingPrice)}
+                                    </p>
+                                </div>
+
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <FaCalendarAlt className="text-purple-500" />
+                                        <span className="font-medium">Delivery Date</span>
+                                    </div>
+                                    <p className="text-gray-800 font-semibold text-xl">
+                                        {unit.deliveryDate} years
                                     </p>
                                 </div>
                             </div>
-
-                            {/* Google Maps Link */}
-                            {project.actualLocation && (
-                                <div className="bg-blue-50 p-4 rounded-lg">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <FaMapMarkerAlt className="text-red-500" />
-                                        <span className="font-medium">Actual Location</span>
-                                    </div>
-                                    <a
-                                        href={project.actualLocation}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-                                    >
-                                        <FaLink />
-                                        View on Google Maps
-                                    </a>
-                                </div>
-                            )}
                         </div>
 
                         <div className="mt-8 flex justify-end">
@@ -598,8 +643,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     };
 
     // Handle preview
-    const handlePreview = (project) => {
-        setPreviewProject(project);
+    const handlePreview = (unit) => {
+        setPreviewUnit(unit);
         setShowPreviewModal(true);
     };
 
@@ -611,16 +656,16 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                     type="text"
                     value={filters.global}
                     onChange={(e) => handleFilterChange('global', e.target.value)}
-                    placeholder="Search projects..."
+                    placeholder="Search units..."
                     className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
                 />
-                {canManageProjects && (
+                {canManageUnits && (
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
                     >
                         <FaPlus size={18} />
-                        <span>Add Project</span>
+                        <span>Add Unit</span>
                     </button>
                 )}
             </div>
@@ -634,8 +679,26 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                 ID
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Image
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <div className="flex items-center gap-2">
-                                    <FaGlobeAmericas />
+                                    <select
+                                        value={filters.project}
+                                        onChange={(e) => handleFilterChange('project', e.target.value)}
+                                        className="text-xs p-1 border rounded w-full"
+                                    >
+                                        <option value="">All Projects</option>
+                                        {projects.map(project => (
+                                            <option key={project.projectID} value={project.projectID}>
+                                                {project.projectDescEn}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div className="flex items-center gap-2">
                                     <input
                                         type="text"
                                         placeholder="Filter English"
@@ -647,31 +710,31 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <div className="flex items-center gap-2">
-                                    <FaGlobeAsia />
-                                    <input
-                                        type="text"
-                                        placeholder="Filter Arabic"
-                                        value={filters.arabic}
-                                        onChange={(e) => handleFilterChange('arabic', e.target.value)}
+                                    <select
+                                        value={filters.category}
+                                        onChange={(e) => handleFilterChange('category', e.target.value)}
                                         className="text-xs p-1 border rounded w-full"
-                                    />
+                                    >
+                                        <option value="">All Categories</option>
+                                        {categories.map(category => (
+                                            <option key={category.categoryID} value={category.categoryID}>
+                                                {category.categoryDescEN}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Image
-                            </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <div className="flex items-center gap-2">
-                                    <FaCity />
                                     <select
                                         value={filters.location}
                                         onChange={(e) => handleFilterChange('location', e.target.value)}
                                         className="text-xs p-1 border rounded w-full"
                                     >
                                         <option value="">All Locations</option>
-                                        {locations.map(loc => (
-                                            <option key={loc.locationID} value={loc.locationID}>
-                                                {loc.locationDescEN}
+                                        {locations.map(location => (
+                                            <option key={location.locationID} value={location.locationID}>
+                                                {location.locationDescEN}
                                             </option>
                                         ))}
                                     </select>
@@ -679,32 +742,54 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <div className="flex items-center gap-2">
-                                    <FaBuilding />
+                                    <FaBed />
                                     <select
-                                        value={filters.developer}
-                                        onChange={(e) => handleFilterChange('developer', e.target.value)}
-                                        className="text-xs p-1 border rounded w-full"
-                                    >
-                                        <option value="">All Developers</option>
-                                        {developers.map(dev => (
-                                            <option key={dev.developerID} value={dev.developerID}>
-                                                {dev.developerDescEN}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <div className="flex items-center gap-2">
-                                    <FaFire />
-                                    <select
-                                        value={filters.hotDeal}
-                                        onChange={(e) => handleFilterChange('hotDeal', e.target.value)}
+                                        value={filters.bedrooms}
+                                        onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
                                         className="text-xs p-1 border rounded w-full"
                                     >
                                         <option value="">All</option>
-                                        <option value="hot">Hot Deals</option>
-                                        <option value="normal">Normal</option>
+                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+                                            <option key={num} value={num}>
+                                                {num} {num === 1 ? 'Bedroom' : 'Bedrooms'}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex gap-1 w-full">
+                                        <input
+                                            type="number"
+                                            placeholder="Min"
+                                            value={filters.minPrice}
+                                            onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                                            className="text-xs p-1 border rounded w-1/2"
+                                        />
+                                        <input
+                                            type="number"
+                                            placeholder="Max"
+                                            value={filters.maxPrice}
+                                            onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                                            className="text-xs p-1 border rounded w-1/2"
+                                        />
+                                    </div>
+                                </div>
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        value={filters.finishing}
+                                        onChange={(e) => handleFilterChange('finishing', e.target.value)}
+                                        className="text-xs p-1 border rounded w-full"
+                                    >
+                                        <option value="">All Finishings</option>
+                                        {finishings.map(finishing => (
+                                            <option key={finishing.finishingID} value={finishing.finishingID}>
+                                                {finishing.finishingDescEN}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </th>
@@ -716,36 +801,30 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="8" className="px-3 py-4 text-center">
+                                <td colSpan="10" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
-                                        Loading projects...
+                                        Loading units...
                                     </div>
                                 </td>
                             </tr>
-                        ) : paginatedProjects.length === 0 ? (
+                        ) : paginatedUnits.length === 0 ? (
                             <tr>
-                                <td colSpan="8" className="px-3 py-4 text-center">
-                                    No projects found
+                                <td colSpan="10" className="px-3 py-4 text-center">
+                                    No units found
                                 </td>
                             </tr>
                         ) : (
-                            paginatedProjects.map((project) => (
-                                <tr key={project.projectID} className="hover:bg-gray-50">
+                            paginatedUnits.map((unit) => (
+                                <tr key={unit.unitId} className="hover:bg-gray-50">
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        <div className="font-medium text-gray-900">#{project.projectID}</div>
-                                    </td>
-                                    <td className="px-3 py-4">
-                                        <div className="font-medium">{project.projectDescEn}</div>
-                                    </td>
-                                    <td className="px-3 py-4">
-                                        <div className="text-right font-arabic">{project.projectDescAr}</div>
+                                        <div className="font-medium text-gray-900">#{unit.unitId}</div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {project.projectImagePath ? (
+                                        {unit.unitImagePath ? (
                                             <img
-                                                src={`https://localhost:7086${project.projectImagePath}`}
-                                                alt={project.projectDescEn}
+                                                src={`https://localhost:7086${unit.unitImagePath}`}
+                                                alt={unit.unitDescriptionEN}
                                                 className="h-12 w-12 object-cover rounded-md"
                                             />
                                         ) : (
@@ -756,44 +835,61 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     </td>
                                     <td className="px-3 py-4">
                                         <div className="space-y-1">
-                                            <div className="text-right font-arabic text-sm">{project.locationNameAR}</div>
-                                            <div className="text-gray-600 text-xs">{project.locationNameEN}</div>
+                                            <div className="font-medium">{unit.projectDescEN}</div>
+                                            <div className="text-right font-arabic text-xs">{unit.projectDescAR}</div>
                                         </div>
                                     </td>
                                     <td className="px-3 py-4">
                                         <div className="space-y-1">
-                                            <div className="text-right font-arabic text-sm">{project.developerNameAR}</div>
-                                            <div className="text-gray-600 text-xs">{project.developerNameEN}</div>
+                                            <div className="font-medium">{unit.unitDescriptionEN}</div>
+                                            <div className="text-right font-arabic text-xs">{unit.unitDescriptionAR}</div>
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-4">
+                                        <div className="space-y-1">
+                                            <div className="font-medium">{unit.categoryDescEN}</div>
+                                            <div className="text-right font-arabic text-xs">{unit.categoryDescAR}</div>
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-4">
+                                        <div className="space-y-1">
+                                            <div className="font-medium">{unit.locationDescEN}</div>
+                                            <div className="text-right font-arabic text-xs">{unit.locationDescAR}</div>
                                         </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {project.flag ? (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                <FaFire className="mr-1" />
-                                                Hot Deal
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                Normal
-                                            </span>
-                                        )}
+                                        <div className="flex items-center gap-1">
+                                            <FaBed className="text-blue-500" />
+                                            <span className="font-medium">{unit.numberOfBedrooms}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        <div className="font-bold text-green-600">
+                                            {formatPrice(unit.startingPrice)}
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-4">
+                                        <div className="space-y-1">
+                                            <div className="font-medium">{unit.finishingStatusDescEN}</div>
+                                            <div className="text-right font-arabic text-xs">{unit.finishingStatusDescAR}</div>
+                                        </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
-                                            {canManageProjects && (
+                                            {canManageUnits && (
                                                 <>
                                                     <button
                                                         className="text-blue-500 hover:text-blue-700 p-1"
-                                                        onClick={() => prepareEditForm(project)}
+                                                        onClick={() => prepareEditForm(unit)}
                                                     >
                                                         <FaEdit size={18} />
                                                     </button>
                                                     <button
                                                         className="text-red-500 hover:text-red-700 p-1"
-                                                        onClick={() => handleDeleteClick(project.projectID)}
-                                                        disabled={deletingProjectId === project.projectID}
+                                                        onClick={() => handleDeleteClick(unit.unitId)}
+                                                        disabled={deletingUnitId === unit.unitId}
                                                     >
-                                                        {deletingProjectId === project.projectID ? (
+                                                        {deletingUnitId === unit.unitId ? (
                                                             <FaSpinner className="animate-spin" size={18} />
                                                         ) : (
                                                             <FaTrashAlt size={18} />
@@ -803,8 +899,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                             )}
                                             <button
                                                 className="text-green-500 hover:text-green-700 p-1"
-                                                onClick={() => handlePreview(project)}
-                                                title="Preview Project"
+                                                onClick={() => handlePreview(unit)}
+                                                title="Preview Unit"
                                             >
                                                 <FaEye size={18} />
                                             </button>
@@ -820,7 +916,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             {/* Pagination */}
             {!loading && renderPagination()}
 
-            {/* Add Project Modal */}
+            {/* Add Unit Modal */}
             {showAddModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -842,50 +938,62 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
-                            <h2 className="text-xl font-bold mb-4">Add New Project</h2>
-                            <form onSubmit={handleAddProject}>
+                            <h2 className="text-xl font-bold mb-4">Add New Unit</h2>
+                            <form onSubmit={handleAddUnit}>
+                                {/* Project and Category */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaGlobeAsia />
-                                                <span>Arabic Description *</span>
+                                                <FaBuilding />
+                                                <span>Project *</span>
                                             </div>
                                         </label>
-                                        <input
-                                            type="text"
-                                            name="ProjectDescAr"
-                                            value={formData.ProjectDescAr}
-                                            onChange={handleFormChange}
-                                            className="w-full px-3 py-2 border rounded-md text-right font-arabic"
-                                            required
-                                            placeholder="أدخل الوصف باللغة العربية"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            <div className="flex items-center gap-2">
-                                                <FaGlobeAmericas />
-                                                <span>English Description *</span>
-                                            </div>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="ProjectDescEn"
-                                            value={formData.ProjectDescEn}
+                                        <select
+                                            name="ProjectId"
+                                            value={formData.ProjectId}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
-                                            placeholder="Enter description in English"
-                                        />
+                                        >
+                                            <option value="">Select Project</option>
+                                            {projects.map(project => (
+                                                <option key={project.projectID} value={project.projectID}>
+                                                    {project.projectDescEN} - {project.locationNameEN}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <FaHome />
+                                                <span>Category *</span>
+                                            </div>
+                                        </label>
+                                        <select
+                                            name="CategoryId"
+                                            value={formData.CategoryId}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        >
+                                            <option value="">Select Category</option>
+                                            {categories.map(category => (
+                                                <option key={category.categoryID} value={category.categoryID}>
+                                                    {category.categoryDescEN} ({category.categoryDescAR})
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
 
+                                {/* Location and Finishing */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaCity />
+                                                <FaMapMarkerAlt />
                                                 <span>Location *</span>
                                             </div>
                                         </label>
@@ -907,44 +1015,75 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaBuilding />
-                                                <span>Developer *</span>
+                                                <FaPaintRoller />
+                                                <span>Finishing Status *</span>
                                             </div>
                                         </label>
                                         <select
-                                            name="DeveloperId"
-                                            value={formData.DeveloperId}
+                                            name="FinishingStatusId"
+                                            value={formData.FinishingStatusId}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
                                         >
-                                            <option value="">Select Developer</option>
-                                            {developers.map(developer => (
-                                                <option key={developer.developerID} value={developer.developerID}>
-                                                    {developer.developerDescEN} ({developer.developerDescAR})
+                                            <option value="">Select Finishing</option>
+                                            {finishings.map(finishing => (
+                                                <option key={finishing.finishingID} value={finishing.finishingID}>
+                                                    {finishing.finishingDescEN} ({finishing.finishingDescAR})
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
 
+                                {/* Descriptions */}
+                                <div className="grid grid-cols-1 gap-6 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <span>Arabic Description *</span>
+                                        </label>
+                                        <input
+                                            name="UnitDescriptionAR"
+                                            value={formData.UnitDescriptionAR}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md text-right font-arabic"
+                                            required
+                                            placeholder="أدخل الوصف باللغة العربية"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <span>English Description *</span>
+                                        </label>
+                                        <input
+                                            name="UnitDescriptionEN"
+                                            value={formData.UnitDescriptionEN}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                            placeholder="Enter description in English"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Image Upload */}
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         <div className="flex items-center gap-2">
                                             <FaImage />
-                                            <span>Project Image *</span>
+                                            <span>Unit Image *</span>
                                         </div>
                                     </label>
-                                    {formData.ProjectImage ? (
+                                    {formData.UnitImage ? (
                                         <div className="relative mb-4">
                                             <img
-                                                src={URL.createObjectURL(formData.ProjectImage)}
+                                                src={URL.createObjectURL(formData.UnitImage)}
                                                 alt="Preview"
                                                 className="h-48 w-full object-cover rounded-lg"
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, ProjectImage: null }))}
+                                                onClick={() => setFormData(prev => ({ ...prev, UnitImage: null }))}
                                                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
                                             >
                                                 <FaTimes size={16} />
@@ -962,8 +1101,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                                 </p>
                                             </div>
                                             <input
-                                                id="ProjectImage"
-                                                name="ProjectImage"
+                                                id="UnitImage"
+                                                name="UnitImage"
                                                 type="file"
                                                 className="hidden"
                                                 onChange={handleFormChange}
@@ -974,57 +1113,61 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                                {/* Specifications */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaCalendarAlt />
-                                                <span>Installment Period (Years) *</span>
+                                                <FaBed />
+                                                <span>Number of Bedrooms *</span>
                                             </div>
                                         </label>
                                         <input
                                             type="number"
-                                            name="InstallmentPeriod"
-                                            value={formData.InstallmentPeriod}
+                                            name="NumberOfBedrooms"
+                                            value={formData.NumberOfBedrooms}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
-                                            min="1"
-                                            placeholder="e.g., 10"
+                                            min="0"
+                                            placeholder="e.g., 3"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaMapMarkerAlt />
-                                                <span>Google Maps Link</span>
+                                                <FaMoneyBillWave />
+                                                <span>Starting Price ($) *</span>
                                             </div>
                                         </label>
                                         <input
-                                            type="url"
-                                            name="ActualLocation"
-                                            value={formData.ActualLocation}
+                                            type="number"
+                                            name="StartingPrice"
+                                            value={formData.StartingPrice}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
-                                            placeholder="https://maps.app.goo.gl/..."
+                                            required
+                                            min="0"
+                                            placeholder="e.g., 500000"
                                         />
                                     </div>
-                                </div>
-
-                                <div className="mb-6">
-                                    <div className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id="Flag"
-                                            name="Flag"
-                                            checked={formData.Flag}
-                                            onChange={handleFormChange}
-                                            className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                                        />
-                                        <label htmlFor="Flag" className="ml-2 text-sm text-gray-700 flex items-center gap-2">
-                                            <FaFire className="text-red-500" />
-                                            Mark as Hot Deal
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <FaCalendarAlt />
+                                                <span>Delivery Date (Years) *</span>
+                                            </div>
                                         </label>
+                                        <input
+                                            type="number"
+                                            name="DeliveryDate"
+                                            value={formData.DeliveryDate}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                            min="1"
+                                            placeholder="e.g., 3"
+                                        />
                                     </div>
                                 </div>
 
@@ -1042,9 +1185,9 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <button
                                         type="submit"
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                        disabled={updatingProject || !formData.ProjectImage}
+                                        disabled={updatingUnit || !formData.UnitImage}
                                     >
-                                        {updatingProject ? (
+                                        {updatingUnit ? (
                                             <>
                                                 <FaSpinner className="animate-spin" size={18} />
                                                 <span>Adding...</span>
@@ -1052,7 +1195,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                         ) : (
                                             <>
                                                 <FaPlus size={18} />
-                                                <span>Add Project</span>
+                                                <span>Add Unit</span>
                                             </>
                                         )}
                                     </button>
@@ -1063,7 +1206,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                 </motion.div>
             )}
 
-            {/* Edit Project Modal */}
+            {/* Edit Unit Modal */}
             {showEditModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -1084,48 +1227,62 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
-                            <h2 className="text-xl font-bold mb-4">Edit Project</h2>
-                            <form onSubmit={handleUpdateProject}>
+                            <h2 className="text-xl font-bold mb-4">Edit Unit</h2>
+                            <form onSubmit={handleUpdateUnit}>
+                                {/* Project and Category */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaGlobeAsia />
-                                                <span>Arabic Description *</span>
+                                                <FaBuilding />
+                                                <span>Project *</span>
                                             </div>
                                         </label>
-                                        <input
-                                            type="text"
-                                            name="ProjectDescAr"
-                                            value={editFormData.ProjectDescAr}
-                                            onChange={handleEditFormChange}
-                                            className="w-full px-3 py-2 border rounded-md text-right font-arabic"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            <div className="flex items-center gap-2">
-                                                <FaGlobeAmericas />
-                                                <span>English Description *</span>
-                                            </div>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="ProjectDescEn"
-                                            value={editFormData.ProjectDescEn}
+                                        <select
+                                            name="ProjectId"
+                                            value={editFormData.ProjectId}
                                             onChange={handleEditFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
-                                        />
+                                        >
+                                            <option value="">Select Project</option>
+                                            {projects.map(project => (
+                                                <option key={project.projectID} value={project.projectID}>
+                                                    {project.projectDescEN} - {project.locationNameEN}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <FaHome />
+                                                <span>Category *</span>
+                                            </div>
+                                        </label>
+                                        <select
+                                            name="CategoryId"
+                                            value={editFormData.CategoryId}
+                                            onChange={handleEditFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        >
+                                            <option value="">Select Category</option>
+                                            {categories.map(category => (
+                                                <option key={category.categoryID} value={category.categoryID}>
+                                                    {category.categoryDescEN} ({category.categoryDescAR})
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
 
+                                {/* Location and Finishing */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaCity />
+                                                <FaMapMarkerAlt />
                                                 <span>Location *</span>
                                             </div>
                                         </label>
@@ -1147,51 +1304,80 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaBuilding />
-                                                <span>Developer *</span>
+                                                <FaPaintRoller />
+                                                <span>Finishing Status *</span>
                                             </div>
                                         </label>
                                         <select
-                                            name="DeveloperId"
-                                            value={editFormData.DeveloperId}
+                                            name="FinishingStatusId"
+                                            value={editFormData.FinishingStatusId}
                                             onChange={handleEditFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
                                         >
-                                            <option value="">Select Developer</option>
-                                            {developers.map(developer => (
-                                                <option key={developer.developerID} value={developer.developerID}>
-                                                    {developer.developerDescEN} ({developer.developerDescAR})
+                                            <option value="">Select Finishing</option>
+                                            {finishings.map(finishing => (
+                                                <option key={finishing.finishingID} value={finishing.finishingID}>
+                                                    {finishing.finishingDescEN} ({finishing.finishingDescAR})
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
 
+                                {/* Descriptions */}
+                                <div className="grid grid-cols-1 gap-6 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <span>Arabic Description *</span>
+                                        </label>
+                                        <input
+                                            name="UnitDescriptionAR"
+                                            value={editFormData.UnitDescriptionAR}
+                                            onChange={handleEditFormChange}
+                                            className="w-full px-3 py-2 border rounded-md text-right font-arabic"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <span>English Description *</span>
+                                        </label>
+                                        <input
+                                            name="UnitDescriptionEN"
+                                            value={editFormData.UnitDescriptionEN}
+                                            onChange={handleEditFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Image Upload */}
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         <div className="flex items-center gap-2">
                                             <FaImage />
-                                            <span>Project Image</span>
+                                            <span>Unit Image</span>
                                         </div>
                                     </label>
                                     <div className="mb-2">
                                         <p className="text-sm text-gray-600">
-                                            {editFormData.ProjectImage ? 
+                                            {editFormData.UnitImage ? 
                                                 "New image selected. It will be uploaded." : 
                                                 "Existing image will be kept. You can upload a new one if needed."}
                                         </p>
                                     </div>
-                                    {editFormData.ProjectImage ? (
+                                    {editFormData.UnitImage ? (
                                         <div className="relative mb-4">
                                             <img
-                                                src={URL.createObjectURL(editFormData.ProjectImage)}
+                                                src={URL.createObjectURL(editFormData.UnitImage)}
                                                 alt="New Preview"
                                                 className="h-48 w-full object-cover rounded-lg"
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => setEditFormData(prev => ({ ...prev, ProjectImage: null }))}
+                                                onClick={() => setEditFormData(prev => ({ ...prev, UnitImage: null }))}
                                                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
                                             >
                                                 <FaTimes size={16} />
@@ -1221,8 +1407,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                             </p>
                                         </div>
                                         <input
-                                            id="edit_ProjectImage"
-                                            name="ProjectImage"
+                                            id="edit_UnitImage"
+                                            name="UnitImage"
                                             type="file"
                                             className="hidden"
                                             onChange={handleEditFormChange}
@@ -1231,56 +1417,59 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     </label>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                                {/* Specifications */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaCalendarAlt />
-                                                <span>Installment Period (Years) *</span>
+                                                <FaBed />
+                                                <span>Number of Bedrooms *</span>
                                             </div>
                                         </label>
                                         <input
                                             type="number"
-                                            name="InstallmentPeriod"
-                                            value={editFormData.InstallmentPeriod}
+                                            name="NumberOfBedrooms"
+                                            value={editFormData.NumberOfBedrooms}
+                                            onChange={handleEditFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                            min="0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <FaMoneyBillWave />
+                                                <span>Starting Price ($) *</span>
+                                            </div>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="StartingPrice"
+                                            value={editFormData.StartingPrice}
+                                            onChange={handleEditFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                            min="0"
+                                            step="1000"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <FaCalendarAlt />
+                                                <span>Delivery Date (Years) *</span>
+                                            </div>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="DeliveryDate"
+                                            value={editFormData.DeliveryDate}
                                             onChange={handleEditFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
                                             min="1"
                                         />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            <div className="flex items-center gap-2">
-                                                <FaMapMarkerAlt />
-                                                <span>Google Maps Link</span>
-                                            </div>
-                                        </label>
-                                        <input
-                                            type="url"
-                                            name="ActualLocation"
-                                            value={editFormData.ActualLocation}
-                                            onChange={handleEditFormChange}
-                                            className="w-full px-3 py-2 border rounded-md"
-                                            placeholder="https://maps.app.goo.gl/..."
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="mb-6">
-                                    <div className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id="edit_Flag"
-                                            name="Flag"
-                                            checked={editFormData.Flag}
-                                            onChange={handleEditFormChange}
-                                            className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                                        />
-                                        <label htmlFor="edit_Flag" className="ml-2 text-sm text-gray-700 flex items-center gap-2">
-                                            <FaFire className="text-red-500" />
-                                            Mark as Hot Deal
-                                        </label>
                                     </div>
                                 </div>
 
@@ -1297,9 +1486,9 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <button
                                         type="submit"
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                        disabled={updatingProject}
+                                        disabled={updatingUnit}
                                     >
-                                        {updatingProject ? (
+                                        {updatingUnit ? (
                                             <>
                                                 <FaSpinner className="animate-spin" size={18} />
                                                 <span>Updating...</span>
@@ -1307,7 +1496,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                         ) : (
                                             <>
                                                 <FaCheck size={18} />
-                                                <span>Update Project</span>
+                                                <span>Update Unit</span>
                                             </>
                                         )}
                                     </button>
@@ -1340,24 +1529,27 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <FaTrashAlt className="h-5 w-5 text-red-600" />
                                 </div>
                                 <div className="ml-4">
-                                    <h3 className="text-lg font-medium text-gray-900">Delete Project</h3>
+                                    <h3 className="text-lg font-medium text-gray-900">Delete Unit</h3>
                                     <div className="mt-2">
                                         <p className="text-sm text-gray-500">
-                                            Are you sure you want to delete this project? This action cannot be undone.
+                                            Are you sure you want to delete this unit? This action cannot be undone.
                                         </p>
-                                        {selectedProject && (
+                                        {selectedUnit && (
                                             <div className="mt-3 p-3 bg-gray-50 rounded">
-                                                <p className="text-sm font-medium text-gray-700">Project Details:</p>
+                                                <p className="text-sm font-medium text-gray-700">Unit Details:</p>
                                                 <p className="text-sm text-gray-600 mt-1">
-                                                    <span className="font-arabic">{selectedProject.projectDescAr}</span>
+                                                    <span className="font-arabic">{selectedUnit.unitDescriptionAR}</span>
                                                     <span className="mx-2">•</span>
-                                                    <span>{selectedProject.projectDescEn}</span>
+                                                    <span>{selectedUnit.unitDescriptionEN}</span>
                                                 </p>
                                                 <p className="text-sm text-gray-600 mt-1">
-                                                    Location: {selectedProject.locationNameEN}
+                                                    Project: {selectedUnit.projectDescEN}
                                                 </p>
                                                 <p className="text-sm text-gray-600 mt-1">
-                                                    Developer: {selectedProject.developerNameEN}
+                                                    Category: {selectedUnit.categoryDescEN}
+                                                </p>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    Price: {formatPrice(selectedUnit.startingPrice)}
                                                 </p>
                                             </div>
                                         )}
@@ -1388,10 +1580,10 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             {/* Preview Modal */}
             {showPreviewModal && (
                 <PreviewModal
-                    project={previewProject}
+                    unit={previewUnit}
                     onClose={() => {
                         setShowPreviewModal(false);
-                        setPreviewProject(null);
+                        setPreviewUnit(null);
                     }}
                 />
             )}

@@ -5,23 +5,21 @@ import { useNavigate } from 'react-router-dom';
 import FinishingsDataTable from '../DataTables/FinishingsDataTable';
 import toast from 'react-hot-toast';
 
-export default function Finishings () {
+export default function Finishings() {
     const navigate = useNavigate();
-
-    function getFinishingsData() {
-        return axios.get(
-            `https://localhost:7086/api/v1/Finishing/GetAllFinishings`,
-            {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('userToken')}`
-                }
-            }
-        );
-    }
 
     const { data: finishings, isLoading, refetch, error, isError } = useQuery({
         queryKey: ['finishings'],
-        queryFn: getFinishingsData,
+        queryFn: () => {
+            return axios.get(
+                `https://localhost:7086/api/v1/Finishing/GetAllFinishings`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+        },
     })
 
     useEffect(() => {

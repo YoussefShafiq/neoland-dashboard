@@ -50,17 +50,6 @@ export default function FinishingsDataTable({ finishings, loading, refetch }) {
         setCurrentPage(1);
     };
 
-    const { data: currentUser } = useQuery({
-        queryKey: ['currentUser'],
-        queryFn: () => {
-            return axios.get('https://localhost:7086/api/v1/User/GetCurrentUser',
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
-                    }
-                })
-        }
-    })
 
     const handleDeleteClick = (finishingId) => {
         setFinishingToDelete(finishingId);

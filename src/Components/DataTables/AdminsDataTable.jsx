@@ -58,17 +58,6 @@ export default function AdminsDataTable({ admins, loading, refetch }) {
         setCurrentPage(1);
     };
 
-    const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
-        queryKey: ['currentUser'],
-        queryFn: () => {
-            return axios.get('https://localhost:7086/api/v1/User/GetCurrentUser',
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
-                    }
-                })
-        }
-    })
 
     const handleDeleteClick = (userId) => {
         setAdminToDelete(userId);
