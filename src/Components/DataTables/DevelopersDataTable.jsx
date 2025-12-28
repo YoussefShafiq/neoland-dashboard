@@ -302,12 +302,12 @@ export default function DevelopersDataTable({ developers, loading, refetch }) {
                                     />
                                 </div>
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {/* <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <div className="flex items-center gap-2">
                                     <FaBuilding />
                                     <span>Projects</span>
                                 </div>
-                            </th>
+                            </th> */}
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
@@ -341,13 +341,13 @@ export default function DevelopersDataTable({ developers, loading, refetch }) {
                                     <td className="px-3 py-4">
                                         <div className="text-right font-arabic text-lg">{developer.developerDescAR}</div>
                                     </td>
-                                    <td className="px-3 py-4 whitespace-nowrap">
+                                    {/* <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 text-sm font-semibold">
                                                 {countProjects(developer)}
                                             </span>
                                         </div>
-                                    </td>
+                                    </td> */}
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             {canManageDevelopers && (
