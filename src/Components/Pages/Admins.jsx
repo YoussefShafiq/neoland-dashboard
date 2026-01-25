@@ -37,6 +37,13 @@ export default function Admins() {
         }
     }, [isError])
 
+    useEffect(() => {
+        if (localStorage.getItem('userRole') !== 'SuperAdmin') {
+            navigate('/categories')
+        }
+    }, [])
+
+
     return (
         <div className="p-4">
             <h1 className="text-3xl font-bold text-gray-800 mb-8">Admins</h1>

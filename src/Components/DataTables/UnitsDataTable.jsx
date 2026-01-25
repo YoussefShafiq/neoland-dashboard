@@ -26,14 +26,14 @@ import {
 } from 'react-icons/fa';
 import { XCircle } from 'lucide-react';
 
-export default function UnitsDataTable({ 
-    units, 
-    locations, 
-    projects, 
-    categories, 
-    finishings, 
-    loading, 
-    refetch 
+export default function UnitsDataTable({
+    units,
+    locations,
+    projects,
+    categories,
+    finishings,
+    loading,
+    refetch
 }) {
     const navigate = useNavigate();
     const [filters, setFilters] = useState({
@@ -269,7 +269,7 @@ export default function UnitsDataTable({
             formDataToSend.append('NumberOfBedrooms', formData.NumberOfBedrooms);
             formDataToSend.append('StartingPrice', formData.StartingPrice);
             formDataToSend.append('DeliveryDate', formData.DeliveryDate);
-            
+
             if (formData.UnitImage) {
                 formDataToSend.append('UnitImage', formData.UnitImage);
             }
@@ -358,7 +358,7 @@ export default function UnitsDataTable({
             formDataToSend.append('NumberOfBedrooms', editFormData.NumberOfBedrooms);
             formDataToSend.append('StartingPrice', editFormData.StartingPrice);
             formDataToSend.append('DeliveryDate', editFormData.DeliveryDate);
-            
+
             // Always send an image - either new or existing
             if (editFormData.UnitImage) {
                 formDataToSend.append('UnitImage', editFormData.UnitImage);
@@ -417,34 +417,34 @@ export default function UnitsDataTable({
 
         const matchesArabic = filters.arabic === '' ||
             unit.unitDescriptionAR.includes(filters.arabic);
-        
+
         const matchesEnglish = filters.english === '' ||
             unit.unitDescriptionEN.toLowerCase().includes(filters.english.toLowerCase());
-        
+
         const matchesLocation = filters.location === '' ||
             unit.locationId.toString() === filters.location;
-        
+
         const matchesProject = filters.project === '' ||
             unit.projectId.toString() === filters.project;
-        
+
         const matchesCategory = filters.category === '' ||
             unit.categoryId.toString() === filters.category;
-        
+
         const matchesFinishing = filters.finishing === '' ||
             unit.finishingStatusId.toString() === filters.finishing;
-        
+
         const matchesMinPrice = filters.minPrice === '' ||
             unit.startingPrice >= parseFloat(filters.minPrice);
-        
+
         const matchesMaxPrice = filters.maxPrice === '' ||
             unit.startingPrice <= parseFloat(filters.maxPrice);
-        
+
         const matchesBedrooms = filters.bedrooms === '' ||
             unit.numberOfBedrooms.toString() === filters.bedrooms;
 
-        return matchesGlobal && matchesArabic && matchesEnglish && matchesLocation && 
-               matchesProject && matchesCategory && matchesFinishing &&
-               matchesMinPrice && matchesMaxPrice && matchesBedrooms;
+        return matchesGlobal && matchesArabic && matchesEnglish && matchesLocation &&
+            matchesProject && matchesCategory && matchesFinishing &&
+            matchesMinPrice && matchesMaxPrice && matchesBedrooms;
     }) || [];
 
     // Pagination logic
@@ -1363,8 +1363,8 @@ export default function UnitsDataTable({
                                     </label>
                                     <div className="mb-2">
                                         <p className="text-sm text-gray-600">
-                                            {editFormData.UnitImage ? 
-                                                "New image selected. It will be uploaded." : 
+                                            {editFormData.UnitImage ?
+                                                "New image selected. It will be uploaded." :
                                                 "Existing image will be kept. You can upload a new one if needed."}
                                         </p>
                                     </div>
@@ -1395,7 +1395,7 @@ export default function UnitsDataTable({
                                             </div>
                                         </div>
                                     ) : null}
-                                    
+
                                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 mt-4">
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                             <FaImage className="w-8 h-8 mb-3 text-gray-400" />

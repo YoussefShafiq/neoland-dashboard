@@ -13,19 +13,20 @@ export default function Login() {
     async function login(values) {
         setloading(true)
         try {
-            let {data} = await axios.post('https://localhost:7086/api/v1/User/login', values)
-            
+            let { data } = await axios.post('https://localhost:7086/api/v1/User/login', values)
+
             setloading(false)
             toast.success('logged in successfully', {
                 duration: 2000,
             })
             localStorage.setItem('userToken', data.token)
             localStorage.setItem('userId', data.userID)
+            localStorage.setItem('userRole', data.userRole)
             navigate('/')
 
         } catch (error) {
-            console.log(error);
-            
+            console.error(error);
+
             toast.error(error?.response?.data?.message, {
                 duration: 5000,
             })
@@ -35,7 +36,7 @@ export default function Login() {
 
     let validationSchema = object({
         userName: string().required('username is required'),
-        userPassword: string().min(9, 'userPassword must be at least 9 length').required('userPassword is required')
+        userPassword: string().min(5, 'userPassword must be at least 9 length').required('userPassword is required')
     })
 
     let formik = useFormik({

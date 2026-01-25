@@ -39,6 +39,8 @@ export default function Sidebar() {
             setloggingOut(false)
             toast.error(error.response?.data?.message || 'something went wrong', { duration: 3000 });
             localStorage.removeItem('userToken')
+            localStorage.removeItem('userId')
+            localStorage.removeItem('userRole')
             navigate('/login')
         }
     }
@@ -53,6 +55,7 @@ export default function Sidebar() {
             title: 'Admins',
             path: '/admins',
             icon: <RiAdminLine />,
+            superAdminOnly: true,
         },
         {
             title: 'Categories',
@@ -105,7 +108,12 @@ export default function Sidebar() {
                     <div className="flex flex-col gap-1 text-gray-400 text-base">
                         {sidebarPages.map((p, i) => (
                             <>
-                                <NavLink key={p.name} className="px-4 py-2 rounded-xl flex items-center gap-2" to={p.path} ><div className="">{p.icon} </div>{p.title}</NavLink>
+                                {p.superAdminOnly ?
+                                    <>
+                                        {localStorage.getItem('userRole') == 'SuperAdmin' && <NavLink key={p.name} className="px-4 py-2 rounded-xl flex items-center gap-2" to={p.path} ><div className="">{p.icon} </div>{p.title}</NavLink>}
+                                    </>
+                                    :
+                                    <NavLink key={p.name} className="px-4 py-2 rounded-xl flex items-center gap-2" to={p.path} ><div className="">{p.icon} </div>{p.title}</NavLink>}
                             </>
                         ))}
                     </div>
