@@ -56,6 +56,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         ProjectImage: null,
         Flag: false,
         InstallmentPeriod: '',
+        DownPayment: '',
         ActualLocation: '',
         LocationId: '',
         DeveloperId: ''
@@ -69,6 +70,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         existingImage: null,
         Flag: false,
         InstallmentPeriod: '',
+        DownPayment: '',
         ActualLocation: '',
         LocationId: '',
         DeveloperId: ''
@@ -200,6 +202,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             ProjectImage: null,
             Flag: false,
             InstallmentPeriod: '',
+            DownPayment: '',
             ActualLocation: '',
             LocationId: '',
             DeveloperId: ''
@@ -216,6 +219,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             existingImage: project.projectImagePath,
             Flag: project.flag,
             InstallmentPeriod: project.installmentPeriod || '',
+            DownPayment: project.downPayment || '',
             ActualLocation: project.actualLocation || '',
             LocationId: project.locationId,
             DeveloperId: project.developerId
@@ -252,6 +256,12 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             return;
         }
 
+        // Optional: Add validation for DownPayment if needed
+        // if (!formData.DownPayment || formData.DownPayment <= 0) {
+        //     toast.error('Please enter a valid down payment amount', { duration: 3000 });
+        //     return;
+        // }
+
         setUpdatingProject(true);
         try {
             const formDataToSend = new FormData();
@@ -259,10 +269,11 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             formDataToSend.append('ProjectDescEn', formData.ProjectDescEn);
             formDataToSend.append('Flag', formData.Flag);
             formDataToSend.append('InstallmentPeriod', formData.InstallmentPeriod);
+            formDataToSend.append('DownPayment', formData.DownPayment || 0);
             formDataToSend.append('ActualLocation', formData.ActualLocation);
             formDataToSend.append('LocationId', formData.LocationId);
             formDataToSend.append('DeveloperId', formData.DeveloperId);
-            
+
             if (formData.ProjectImage) {
                 formDataToSend.append('ProjectImage', formData.ProjectImage);
             }
@@ -319,6 +330,12 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             return;
         }
 
+        // Optional: Add validation for DownPayment if needed
+        // if (!editFormData.DownPayment || editFormData.DownPayment <= 0) {
+        //     toast.error('Please enter a valid down payment amount', { duration: 3000 });
+        //     return;
+        // }
+
         setUpdatingProject(true);
         try {
             const formDataToSend = new FormData();
@@ -326,10 +343,11 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             formDataToSend.append('ProjectDescEn', editFormData.ProjectDescEn);
             formDataToSend.append('Flag', editFormData.Flag);
             formDataToSend.append('InstallmentPeriod', editFormData.InstallmentPeriod);
+            formDataToSend.append('DownPayment', editFormData.DownPayment || 0);
             formDataToSend.append('ActualLocation', editFormData.ActualLocation);
             formDataToSend.append('LocationId', editFormData.LocationId);
             formDataToSend.append('DeveloperId', editFormData.DeveloperId);
-            
+
             // Always send an image - either new or existing
             if (editFormData.ProjectImage) {
                 formDataToSend.append('ProjectImage', editFormData.ProjectImage);
@@ -388,22 +406,22 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
 
         const matchesArabic = filters.arabic === '' ||
             project.projectDescAr.includes(filters.arabic);
-        
+
         const matchesEnglish = filters.english === '' ||
             project.projectDescEn.toLowerCase().includes(filters.english.toLowerCase());
-        
+
         const matchesLocation = filters.location === '' ||
             project.locationId.toString() === filters.location;
-        
+
         const matchesDeveloper = filters.developer === '' ||
             project.developerId.toString() === filters.developer;
-        
+
         const matchesHotDeal = filters.hotDeal === '' ||
             (filters.hotDeal === 'hot' && project.flag) ||
             (filters.hotDeal === 'normal' && !project.flag);
 
-        return matchesGlobal && matchesArabic && matchesEnglish && matchesLocation && 
-               matchesDeveloper && matchesHotDeal;
+        return matchesGlobal && matchesArabic && matchesEnglish && matchesLocation &&
+            matchesDeveloper && matchesHotDeal;
     }) || [];
 
     // Pagination logic
@@ -996,19 +1014,38 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaMapMarkerAlt />
-                                                <span>Google Maps Link</span>
+                                                <FaMoneyBillWave />
+                                                <span>Down Payment ($)</span>
                                             </div>
                                         </label>
                                         <input
-                                            type="url"
-                                            name="ActualLocation"
-                                            value={formData.ActualLocation}
+                                            type="number"
+                                            name="DownPayment"
+                                            value={formData.DownPayment}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
-                                            placeholder="https://maps.app.goo.gl/..."
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="e.g., 50000"
                                         />
                                     </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <FaMapMarkerAlt />
+                                            <span>Google Maps Link</span>
+                                        </div>
+                                    </label>
+                                    <input
+                                        type="url"
+                                        name="ActualLocation"
+                                        value={formData.ActualLocation}
+                                        onChange={handleFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        placeholder="https://maps.app.goo.gl/..."
+                                    />
                                 </div>
 
                                 <div className="mb-6">
@@ -1177,8 +1214,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     </label>
                                     <div className="mb-2">
                                         <p className="text-sm text-gray-600">
-                                            {editFormData.ProjectImage ? 
-                                                "New image selected. It will be uploaded." : 
+                                            {editFormData.ProjectImage ?
+                                                "New image selected. It will be uploaded." :
                                                 "Existing image will be kept. You can upload a new one if needed."}
                                         </p>
                                     </div>
@@ -1209,7 +1246,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                             </div>
                                         </div>
                                     ) : null}
-                                    
+
                                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 mt-4">
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                             <FaImage className="w-8 h-8 mb-3 text-gray-400" />
@@ -1252,19 +1289,38 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <div className="flex items-center gap-2">
-                                                <FaMapMarkerAlt />
-                                                <span>Google Maps Link</span>
+                                                <FaMoneyBillWave />
+                                                <span>Down Payment ($)</span>
                                             </div>
                                         </label>
                                         <input
-                                            type="url"
-                                            name="ActualLocation"
-                                            value={editFormData.ActualLocation}
+                                            type="number"
+                                            name="DownPayment"
+                                            value={editFormData.DownPayment}
                                             onChange={handleEditFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
-                                            placeholder="https://maps.app.goo.gl/..."
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="e.g., 50000"
                                         />
                                     </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <FaMapMarkerAlt />
+                                            <span>Google Maps Link</span>
+                                        </div>
+                                    </label>
+                                    <input
+                                        type="url"
+                                        name="ActualLocation"
+                                        value={editFormData.ActualLocation}
+                                        onChange={handleEditFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        placeholder="https://maps.app.goo.gl/..."
+                                    />
                                 </div>
 
                                 <div className="mb-6">
@@ -1358,6 +1414,9 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                                 </p>
                                                 <p className="text-sm text-gray-600 mt-1">
                                                     Developer: {selectedProject.developerNameEN}
+                                                </p>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    Down Payment: ${selectedProject.downPayment ? selectedProject.downPayment.toLocaleString() : '0'}
                                                 </p>
                                             </div>
                                         )}

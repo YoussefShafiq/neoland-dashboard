@@ -252,7 +252,7 @@ export default function UnitsDataTable({
             return;
         }
 
-        if (!formData.DeliveryDate || formData.DeliveryDate <= 0) {
+        if (!formData.DeliveryDate || formData.DeliveryDate < 0) {
             toast.error('Please enter a valid delivery date (years)', { duration: 3000 });
             return;
         }
@@ -341,7 +341,7 @@ export default function UnitsDataTable({
             return;
         }
 
-        if (!editFormData.DeliveryDate || editFormData.DeliveryDate <= 0) {
+        if (!editFormData.DeliveryDate || editFormData.DeliveryDate < 0) {
             toast.error('Please enter a valid delivery date (years)', { duration: 3000 });
             return;
         }
@@ -1165,7 +1165,7 @@ export default function UnitsDataTable({
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
-                                            min="1"
+                                            min="0"
                                             placeholder="e.g., 3"
                                         />
                                     </div>
@@ -1468,7 +1468,7 @@ export default function UnitsDataTable({
                                             onChange={handleEditFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
-                                            min="1"
+                                            min="0"
                                         />
                                     </div>
                                 </div>

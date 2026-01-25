@@ -508,6 +508,7 @@ export default function AdminsDataTable({ admins, loading, refetch }) {
                                             required
                                         >
                                             <option value="Admin">Admin</option>
+                                            <option value="SuperAdmin">Super Admin</option>
                                         </select>
                                     </div>
                                 </div>
@@ -630,6 +631,7 @@ export default function AdminsDataTable({ admins, loading, refetch }) {
                                             required
                                         >
                                             <option value="Admin">Admin</option>
+                                            <option value="SuperAdmin">Super Admin</option>
                                         </select>
                                     </div>
                                 </div>
