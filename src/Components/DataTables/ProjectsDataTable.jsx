@@ -218,8 +218,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             ProjectImage: null,
             existingImage: project.projectImagePath,
             Flag: project.flag,
-            InstallmentPeriod: project.installmentPeriod || '',
-            DownPayment: project.downPayment || '',
+            InstallmentPeriod: project.installmentPeriod || 0,
+            DownPayment: project.downPayment || 0,
             ActualLocation: project.actualLocation || '',
             LocationId: project.locationId,
             DeveloperId: project.developerId
