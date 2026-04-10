@@ -64,7 +64,7 @@ export default function UnitsDataTable({
     const [formData, setFormData] = useState({
         ProjectId: '',
         CategoryId: '',
-        UnitImage: null,
+        UnitImages: [],
         LocationId: '',
         FinishingStatusId: '',
         UnitDescriptionAR: '',
@@ -78,8 +78,9 @@ export default function UnitsDataTable({
         unitId: null,
         ProjectId: '',
         CategoryId: '',
-        UnitImage: null,
-        existingImage: null,
+        existingImages: [],
+        imagesToDeleteIds: [],
+        newImages: [],
         LocationId: '',
         FinishingStatusId: '',
         UnitDescriptionAR: '',
@@ -100,6 +101,31 @@ export default function UnitsDataTable({
     const handleDeleteClick = (unitId) => {
         setUnitToDelete(unitId);
         setShowDeleteConfirm(true);
+    };
+
+    const removeCreateImageAtIndex = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            UnitImages: (prev.UnitImages || []).filter((_, i) => i !== index)
+        }));
+    };
+
+    const removeNewEditImageAtIndex = (index) => {
+        setEditFormData(prev => ({
+            ...prev,
+            newImages: (prev.newImages || []).filter((_, i) => i !== index)
+        }));
+    };
+
+    const toggleDeleteExistingImage = (imageId) => {
+        setEditFormData(prev => {
+            const current = prev.imagesToDeleteIds || [];
+            const exists = current.includes(imageId);
+            return {
+                ...prev,
+                imagesToDeleteIds: exists ? current.filter(id => id !== imageId) : [...current, imageId]
+            };
+        });
     };
 
     const handleConfirmDelete = async () => {
@@ -138,10 +164,18 @@ export default function UnitsDataTable({
         const { name, value, type, files } = e.target;
 
         if (type === 'file') {
-            setFormData(prev => ({
-                ...prev,
-                [name]: files[0]
-            }));
+            if (name === 'UnitImages') {
+                const selectedFiles = Array.from(files || []);
+                setFormData(prev => ({
+                    ...prev,
+                    UnitImages: [...(prev.UnitImages || []), ...selectedFiles]
+                }));
+            } else {
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: files?.[0] ?? null
+                }));
+            }
         } else {
             setFormData(prev => ({
                 ...prev,
@@ -154,10 +188,18 @@ export default function UnitsDataTable({
         const { name, value, type, files } = e.target;
 
         if (type === 'file') {
-            setEditFormData(prev => ({
-                ...prev,
-                [name]: files[0]
-            }));
+            if (name === 'newImages') {
+                const selectedFiles = Array.from(files || []);
+                setEditFormData(prev => ({
+                    ...prev,
+                    newImages: [...(prev.newImages || []), ...selectedFiles]
+                }));
+            } else {
+                setEditFormData(prev => ({
+                    ...prev,
+                    [name]: files?.[0] ?? null
+                }));
+            }
         } else {
             setEditFormData(prev => ({
                 ...prev,
@@ -170,7 +212,7 @@ export default function UnitsDataTable({
         setFormData({
             ProjectId: '',
             CategoryId: '',
-            UnitImage: null,
+            UnitImages: [],
             LocationId: '',
             FinishingStatusId: '',
             UnitDescriptionAR: '',
@@ -187,8 +229,9 @@ export default function UnitsDataTable({
             unitId: unit.unitId,
             ProjectId: unit.projectId,
             CategoryId: unit.categoryId,
-            UnitImage: null,
-            existingImage: unit.unitImagePath,
+            existingImages: Array.isArray(unit.images) ? unit.images : [],
+            imagesToDeleteIds: [],
+            newImages: [],
             LocationId: unit.locationId,
             FinishingStatusId: unit.finishingStatusId,
             UnitDescriptionAR: unit.unitDescriptionAR,
@@ -222,8 +265,8 @@ export default function UnitsDataTable({
             return;
         }
 
-        if (!formData.UnitImage) {
-            toast.error('Unit image is required', { duration: 3000 });
+        if (!Array.isArray(formData.UnitImages) || formData.UnitImages.length === 0) {
+            toast.error('At least one unit image is required', { duration: 3000 });
             return;
         }
 
@@ -270,8 +313,8 @@ export default function UnitsDataTable({
             formDataToSend.append('StartingPrice', formData.StartingPrice);
             formDataToSend.append('DeliveryDate', formData.DeliveryDate);
 
-            if (formData.UnitImage) {
-                formDataToSend.append('UnitImage', formData.UnitImage);
+            for (const file of formData.UnitImages) {
+                formDataToSend.append('UnitImages', file);
             }
 
             await axios.post(
@@ -359,24 +402,12 @@ export default function UnitsDataTable({
             formDataToSend.append('StartingPrice', editFormData.StartingPrice);
             formDataToSend.append('DeliveryDate', editFormData.DeliveryDate);
 
-            // Always send an image - either new or existing
-            if (editFormData.UnitImage) {
-                formDataToSend.append('UnitImage', editFormData.UnitImage);
-            } else if (editFormData.existingImage) {
-                // Convert existing image URL to File object
-                try {
-                    const fullImageUrl = `https://localhost:7086${editFormData.existingImage}`;
-                    const response = await fetch(fullImageUrl);
-                    const blob = await response.blob();
-                    const file = new File([blob], 'existing-image.jpg', { type: blob.type });
-                    formDataToSend.append('UnitImage', file);
-                } catch (error) {
-                    console.error('Error converting existing image:', error);
-                    // Create a placeholder file if conversion fails
-                    const blob = new Blob([''], { type: 'image/jpeg' });
-                    const file = new File([blob], 'placeholder.jpg', { type: 'image/jpeg' });
-                    formDataToSend.append('UnitImage', file);
-                }
+            for (const file of (editFormData.newImages || [])) {
+                formDataToSend.append('newImages', file);
+            }
+
+            for (const id of (editFormData.imagesToDeleteIds || [])) {
+                formDataToSend.append('imagesToDeleteIds', id);
             }
 
             await axios.put(
@@ -519,14 +550,19 @@ export default function UnitsDataTable({
                         </div>
 
                         <div className="space-y-6">
-                            {/* Unit Image */}
-                            {unit.unitImagePath && (
+                            {/* Unit Images */}
+                            {Array.isArray(unit.images) && unit.images.length > 0 && (
                                 <div className="mb-6">
-                                    <img
-                                        src={`https://localhost:7086${unit.unitImagePath}`}
-                                        alt={unit.unitDescriptionEN}
-                                        className="w-full h-64 object-cover rounded-lg"
-                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {unit.images.map((img) => (
+                                            <img
+                                                key={img.id}
+                                                src={`https://localhost:7086${img.path}`}
+                                                alt={unit.unitDescriptionEN}
+                                                className="w-full h-64 object-cover rounded-lg"
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
@@ -821,12 +857,19 @@ export default function UnitsDataTable({
                                         <div className="font-medium text-gray-900">#{unit.unitId}</div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {unit.unitImagePath ? (
-                                            <img
-                                                src={`https://localhost:7086${unit.unitImagePath}`}
-                                                alt={unit.unitDescriptionEN}
-                                                className="h-12 w-12 object-cover rounded-md"
-                                            />
+                                        {Array.isArray(unit.images) && unit.images.length > 0 ? (
+                                            <div className="relative inline-block">
+                                                <img
+                                                    src={`https://localhost:7086${unit.images[0].path}`}
+                                                    alt={unit.unitDescriptionEN}
+                                                    className="h-12 w-12 object-cover rounded-md"
+                                                />
+                                                {unit.images.length > 1 && (
+                                                    <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                                                        +{unit.images.length - 1}
+                                                    </span>
+                                                )}
+                                            </div>
                                         ) : (
                                             <div className="h-12 w-12 bg-gray-200 rounded-md flex items-center justify-center">
                                                 <FaImage className="text-gray-400" />
@@ -1071,46 +1114,52 @@ export default function UnitsDataTable({
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         <div className="flex items-center gap-2">
                                             <FaImage />
-                                            <span>Unit Image *</span>
+                                            <span>Unit Images *</span>
                                         </div>
                                     </label>
-                                    {formData.UnitImage ? (
-                                        <div className="relative mb-4">
-                                            <img
-                                                src={URL.createObjectURL(formData.UnitImage)}
-                                                alt="Preview"
-                                                className="h-48 w-full object-cover rounded-lg"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, UnitImage: null }))}
-                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
-                                            >
-                                                <FaTimes size={16} />
-                                            </button>
+                                    {Array.isArray(formData.UnitImages) && formData.UnitImages.length > 0 ? (
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                                            {formData.UnitImages.map((file, idx) => (
+                                                <div key={`${file.name}-${file.size}-${idx}`} className="relative">
+                                                    <img
+                                                        src={URL.createObjectURL(file)}
+                                                        alt={`Preview ${idx + 1}`}
+                                                        className="h-32 w-full object-cover rounded-lg"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeCreateImageAtIndex(idx)}
+                                                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                                                        title="Remove"
+                                                    >
+                                                        <FaTimes size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ) : (
-                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                <FaImage className="w-8 h-8 mb-3 text-gray-400" />
-                                                <p className="mb-2 text-sm text-gray-500">
-                                                    <span className="font-semibold">Click to upload</span> or drag and drop
-                                                </p>
-                                                <p className="text-xs text-gray-500">
-                                                    PNG, JPG, JPEG (MAX. 5MB)
-                                                </p>
-                                            </div>
-                                            <input
-                                                id="UnitImage"
-                                                name="UnitImage"
-                                                type="file"
-                                                className="hidden"
-                                                onChange={handleFormChange}
-                                                accept="image/*"
-                                                required
-                                            />
-                                        </label>
-                                    )}
+                                    ) : null}
+
+                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <FaImage className="w-8 h-8 mb-3 text-gray-400" />
+                                            <p className="mb-2 text-sm text-gray-500">
+                                                <span className="font-semibold">Click to upload</span> or drag and drop
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                PNG, JPG, JPEG (MAX. 5MB)
+                                            </p>
+                                        </div>
+                                        <input
+                                            id="UnitImages"
+                                            name="UnitImages"
+                                            type="file"
+                                            className="hidden"
+                                            onChange={handleFormChange}
+                                            accept="image/*"
+                                            multiple
+                                            required={!(Array.isArray(formData.UnitImages) && formData.UnitImages.length > 0)}
+                                        />
+                                    </label>
                                 </div>
 
                                 {/* Specifications */}
@@ -1185,7 +1234,7 @@ export default function UnitsDataTable({
                                     <button
                                         type="submit"
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                        disabled={updatingUnit || !formData.UnitImage}
+                                        disabled={updatingUnit || !Array.isArray(formData.UnitImages) || formData.UnitImages.length === 0}
                                     >
                                         {updatingUnit ? (
                                             <>
@@ -1358,40 +1407,58 @@ export default function UnitsDataTable({
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         <div className="flex items-center gap-2">
                                             <FaImage />
-                                            <span>Unit Image</span>
+                                            <span>Unit Images</span>
                                         </div>
                                     </label>
-                                    <div className="mb-2">
-                                        <p className="text-sm text-gray-600">
-                                            {editFormData.UnitImage ?
-                                                "New image selected. It will be uploaded." :
-                                                "Existing image will be kept. You can upload a new one if needed."}
-                                        </p>
-                                    </div>
-                                    {editFormData.UnitImage ? (
-                                        <div className="relative mb-4">
-                                            <img
-                                                src={URL.createObjectURL(editFormData.UnitImage)}
-                                                alt="New Preview"
-                                                className="h-48 w-full object-cover rounded-lg"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditFormData(prev => ({ ...prev, UnitImage: null }))}
-                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
-                                            >
-                                                <FaTimes size={16} />
-                                            </button>
+                                    {Array.isArray(editFormData.existingImages) && editFormData.existingImages.length > 0 ? (
+                                        <div className="mb-4">
+                                            <p className="text-sm text-gray-600 mb-2">Existing images</p>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                {editFormData.existingImages.map((img) => {
+                                                    const marked = (editFormData.imagesToDeleteIds || []).includes(img.id);
+                                                    return (
+                                                        <div key={img.id} className="relative">
+                                                            <img
+                                                                src={`https://localhost:7086${img.path}`}
+                                                                alt={`Existing ${img.id}`}
+                                                                className={`h-32 w-full object-cover rounded-lg ${marked ? 'opacity-40' : ''}`}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleDeleteExistingImage(img.id)}
+                                                                className={`absolute top-2 right-2 rounded-full px-3 py-1 text-xs text-white ${marked ? 'bg-gray-700' : 'bg-red-500'}`}
+                                                                title={marked ? 'Undo delete' : 'Mark for delete'}
+                                                            >
+                                                                {marked ? 'Undo' : 'Delete'}
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    ) : editFormData.existingImage ? (
-                                        <div className="relative mb-4">
-                                            <img
-                                                src={`https://localhost:7086${editFormData.existingImage}`}
-                                                alt="Current"
-                                                className="h-48 w-full object-cover rounded-lg opacity-50"
-                                            />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">
-                                                <p className="text-white font-medium">Existing image will be kept</p>
+                                    ) : null}
+
+                                    {Array.isArray(editFormData.newImages) && editFormData.newImages.length > 0 ? (
+                                        <div className="mb-4">
+                                            <p className="text-sm text-gray-600 mb-2">New images to upload</p>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                {editFormData.newImages.map((file, idx) => (
+                                                    <div key={`${file.name}-${file.size}-${idx}`} className="relative">
+                                                        <img
+                                                            src={URL.createObjectURL(file)}
+                                                            alt={`New preview ${idx + 1}`}
+                                                            className="h-32 w-full object-cover rounded-lg"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeNewEditImageAtIndex(idx)}
+                                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                                                            title="Remove"
+                                                        >
+                                                            <FaTimes size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     ) : null}
@@ -1400,19 +1467,20 @@ export default function UnitsDataTable({
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                             <FaImage className="w-8 h-8 mb-3 text-gray-400" />
                                             <p className="mb-2 text-sm text-gray-500">
-                                                <span className="font-semibold">Click to upload new image</span> (optional)
+                                                <span className="font-semibold">Click to upload new images</span> (optional)
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                If not provided, existing image will be kept
+                                                You can add multiple images
                                             </p>
                                         </div>
                                         <input
-                                            id="edit_UnitImage"
-                                            name="UnitImage"
+                                            id="edit_newImages"
+                                            name="newImages"
                                             type="file"
                                             className="hidden"
                                             onChange={handleEditFormChange}
                                             accept="image/*"
+                                            multiple
                                         />
                                     </label>
                                 </div>
