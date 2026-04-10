@@ -53,7 +53,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
     const [formData, setFormData] = useState({
         ProjectDescAr: '',
         ProjectDescEn: '',
-        ProjectImage: null,
+        ProjectImages: [],
         Flag: false,
         InstallmentPeriod: '',
         DownPayment: '',
@@ -66,8 +66,9 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         projectID: null,
         ProjectDescAr: '',
         ProjectDescEn: '',
-        ProjectImage: null,
-        existingImage: null,
+        existingImages: [],
+        imagesToDeleteIds: [],
+        newImages: [],
         Flag: false,
         InstallmentPeriod: '',
         DownPayment: '',
@@ -121,6 +122,31 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         setShowDeleteConfirm(true);
     };
 
+    const removeCreateImageAtIndex = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            ProjectImages: (prev.ProjectImages || []).filter((_, i) => i !== index)
+        }));
+    };
+
+    const removeNewEditImageAtIndex = (index) => {
+        setEditFormData(prev => ({
+            ...prev,
+            newImages: (prev.newImages || []).filter((_, i) => i !== index)
+        }));
+    };
+
+    const toggleDeleteExistingImage = (imageId) => {
+        setEditFormData(prev => {
+            const current = prev.imagesToDeleteIds || [];
+            const exists = current.includes(imageId);
+            return {
+                ...prev,
+                imagesToDeleteIds: exists ? current.filter(id => id !== imageId) : [...current, imageId]
+            };
+        });
+    };
+
     const handleConfirmDelete = async () => {
         if (!projectToDelete) return;
 
@@ -157,10 +183,18 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         const { name, value, type, checked, files } = e.target;
 
         if (type === 'file') {
-            setFormData(prev => ({
-                ...prev,
-                [name]: files[0]
-            }));
+            if (name === 'ProjectImages') {
+                const selectedFiles = Array.from(files || []);
+                setFormData(prev => ({
+                    ...prev,
+                    ProjectImages: [...(prev.ProjectImages || []), ...selectedFiles]
+                }));
+            } else {
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: files?.[0] ?? null
+                }));
+            }
         } else if (type === 'checkbox') {
             setFormData(prev => ({
                 ...prev,
@@ -178,10 +212,18 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         const { name, value, type, checked, files } = e.target;
 
         if (type === 'file') {
-            setEditFormData(prev => ({
-                ...prev,
-                [name]: files[0]
-            }));
+            if (name === 'newImages') {
+                const selectedFiles = Array.from(files || []);
+                setEditFormData(prev => ({
+                    ...prev,
+                    newImages: [...(prev.newImages || []), ...selectedFiles]
+                }));
+            } else {
+                setEditFormData(prev => ({
+                    ...prev,
+                    [name]: files?.[0] ?? null
+                }));
+            }
         } else if (type === 'checkbox') {
             setEditFormData(prev => ({
                 ...prev,
@@ -199,7 +241,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
         setFormData({
             ProjectDescAr: '',
             ProjectDescEn: '',
-            ProjectImage: null,
+            ProjectImages: [],
             Flag: false,
             InstallmentPeriod: '',
             DownPayment: '',
@@ -215,8 +257,9 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             projectID: project.projectID,
             ProjectDescAr: project.projectDescAr,
             ProjectDescEn: project.projectDescEn,
-            ProjectImage: null,
-            existingImage: project.projectImagePath,
+            existingImages: Array.isArray(project.images) ? project.images : [],
+            imagesToDeleteIds: [],
+            newImages: [],
             Flag: project.flag,
             InstallmentPeriod: project.installmentPeriod || 0,
             DownPayment: project.downPayment || 0,
@@ -236,8 +279,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             return;
         }
 
-        if (!formData.ProjectImage) {
-            toast.error('Project image is required', { duration: 3000 });
+        if (!Array.isArray(formData.ProjectImages) || formData.ProjectImages.length === 0) {
+            toast.error('At least one project image is required', { duration: 3000 });
             return;
         }
 
@@ -274,8 +317,8 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             formDataToSend.append('LocationId', formData.LocationId);
             formDataToSend.append('DeveloperId', formData.DeveloperId);
 
-            if (formData.ProjectImage) {
-                formDataToSend.append('ProjectImage', formData.ProjectImage);
+            for (const file of formData.ProjectImages) {
+                formDataToSend.append('ProjectImages', file);
             }
 
             await axios.post(
@@ -348,24 +391,12 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
             formDataToSend.append('LocationId', editFormData.LocationId);
             formDataToSend.append('DeveloperId', editFormData.DeveloperId);
 
-            // Always send an image - either new or existing
-            if (editFormData.ProjectImage) {
-                formDataToSend.append('ProjectImage', editFormData.ProjectImage);
-            } else if (editFormData.existingImage) {
-                // Convert existing image URL to File object
-                try {
-                    const fullImageUrl = `https://localhost:7086${editFormData.existingImage}`;
-                    const response = await fetch(fullImageUrl);
-                    const blob = await response.blob();
-                    const file = new File([blob], 'existing-image.jpg', { type: blob.type });
-                    formDataToSend.append('ProjectImage', file);
-                } catch (error) {
-                    console.error('Error converting existing image:', error);
-                    // Create a placeholder file if conversion fails
-                    const blob = new Blob([''], { type: 'image/jpeg' });
-                    const file = new File([blob], 'placeholder.jpg', { type: 'image/jpeg' });
-                    formDataToSend.append('ProjectImage', file);
-                }
+            for (const file of (editFormData.newImages || [])) {
+                formDataToSend.append('newImages', file);
+            }
+
+            for (const id of (editFormData.imagesToDeleteIds || [])) {
+                formDataToSend.append('imagesToDeleteIds', id);
             }
 
             await axios.put(
@@ -496,14 +527,19 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                         </div>
 
                         <div className="space-y-6">
-                            {/* Project Image */}
-                            {project.projectImagePath && (
+                            {/* Project Images */}
+                            {Array.isArray(project.images) && project.images.length > 0 && (
                                 <div className="mb-6">
-                                    <img
-                                        src={`https://localhost:7086${project.projectImagePath}`}
-                                        alt={project.projectDescEn}
-                                        className="w-full h-64 object-cover rounded-lg"
-                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {project.images.map((img) => (
+                                            <img
+                                                key={img.id}
+                                                src={`https://localhost:7086${img.path}`}
+                                                alt={project.projectDescEn}
+                                                className="w-full h-64 object-cover rounded-lg"
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
@@ -760,12 +796,19 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                         <div className="text-right font-arabic">{project.projectDescAr}</div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {project.projectImagePath ? (
-                                            <img
-                                                src={`https://localhost:7086${project.projectImagePath}`}
-                                                alt={project.projectDescEn}
-                                                className="h-12 w-12 object-cover rounded-md"
-                                            />
+                                        {Array.isArray(project.images) && project.images.length > 0 ? (
+                                            <div className="relative inline-block">
+                                                <img
+                                                    src={`https://localhost:7086${project.images[0].path}`}
+                                                    alt={project.projectDescEn}
+                                                    className="h-12 w-12 object-cover rounded-md"
+                                                />
+                                                {project.images.length > 1 && (
+                                                    <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                                                        +{project.images.length - 1}
+                                                    </span>
+                                                )}
+                                            </div>
                                         ) : (
                                             <div className="h-12 w-12 bg-gray-200 rounded-md flex items-center justify-center">
                                                 <FaImage className="text-gray-400" />
@@ -950,46 +993,52 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         <div className="flex items-center gap-2">
                                             <FaImage />
-                                            <span>Project Image *</span>
+                                            <span>Project Images *</span>
                                         </div>
                                     </label>
-                                    {formData.ProjectImage ? (
-                                        <div className="relative mb-4">
-                                            <img
-                                                src={URL.createObjectURL(formData.ProjectImage)}
-                                                alt="Preview"
-                                                className="h-48 w-full object-cover rounded-lg"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, ProjectImage: null }))}
-                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
-                                            >
-                                                <FaTimes size={16} />
-                                            </button>
+                                    {Array.isArray(formData.ProjectImages) && formData.ProjectImages.length > 0 ? (
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                                            {formData.ProjectImages.map((file, idx) => (
+                                                <div key={`${file.name}-${file.size}-${idx}`} className="relative">
+                                                    <img
+                                                        src={URL.createObjectURL(file)}
+                                                        alt={`Preview ${idx + 1}`}
+                                                        className="h-32 w-full object-cover rounded-lg"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeCreateImageAtIndex(idx)}
+                                                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                                                        title="Remove"
+                                                    >
+                                                        <FaTimes size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ) : (
-                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                <FaImage className="w-8 h-8 mb-3 text-gray-400" />
-                                                <p className="mb-2 text-sm text-gray-500">
-                                                    <span className="font-semibold">Click to upload</span> or drag and drop
-                                                </p>
-                                                <p className="text-xs text-gray-500">
-                                                    PNG, JPG, JPEG (MAX. 5MB)
-                                                </p>
-                                            </div>
-                                            <input
-                                                id="ProjectImage"
-                                                name="ProjectImage"
-                                                type="file"
-                                                className="hidden"
-                                                onChange={handleFormChange}
-                                                accept="image/*"
-                                                required
-                                            />
-                                        </label>
-                                    )}
+                                    ) : null}
+
+                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <FaImage className="w-8 h-8 mb-3 text-gray-400" />
+                                            <p className="mb-2 text-sm text-gray-500">
+                                                <span className="font-semibold">Click to upload</span> or drag and drop
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                PNG, JPG, JPEG (MAX. 5MB)
+                                            </p>
+                                        </div>
+                                        <input
+                                            id="ProjectImages"
+                                            name="ProjectImages"
+                                            type="file"
+                                            className="hidden"
+                                            onChange={handleFormChange}
+                                            accept="image/*"
+                                            multiple
+                                            required={!(Array.isArray(formData.ProjectImages) && formData.ProjectImages.length > 0)}
+                                        />
+                                    </label>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
@@ -1079,7 +1128,7 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <button
                                         type="submit"
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                        disabled={updatingProject || !formData.ProjectImage}
+                                        disabled={updatingProject || !Array.isArray(formData.ProjectImages) || formData.ProjectImages.length === 0}
                                     >
                                         {updatingProject ? (
                                             <>
@@ -1209,40 +1258,58 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         <div className="flex items-center gap-2">
                                             <FaImage />
-                                            <span>Project Image</span>
+                                            <span>Project Images</span>
                                         </div>
                                     </label>
-                                    <div className="mb-2">
-                                        <p className="text-sm text-gray-600">
-                                            {editFormData.ProjectImage ?
-                                                "New image selected. It will be uploaded." :
-                                                "Existing image will be kept. You can upload a new one if needed."}
-                                        </p>
-                                    </div>
-                                    {editFormData.ProjectImage ? (
-                                        <div className="relative mb-4">
-                                            <img
-                                                src={URL.createObjectURL(editFormData.ProjectImage)}
-                                                alt="New Preview"
-                                                className="h-48 w-full object-cover rounded-lg"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditFormData(prev => ({ ...prev, ProjectImage: null }))}
-                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
-                                            >
-                                                <FaTimes size={16} />
-                                            </button>
+                                    {Array.isArray(editFormData.existingImages) && editFormData.existingImages.length > 0 ? (
+                                        <div className="mb-4">
+                                            <p className="text-sm text-gray-600 mb-2">Existing images</p>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                {editFormData.existingImages.map((img) => {
+                                                    const marked = (editFormData.imagesToDeleteIds || []).includes(img.id);
+                                                    return (
+                                                        <div key={img.id} className="relative">
+                                                            <img
+                                                                src={`https://localhost:7086${img.path}`}
+                                                                alt={`Existing ${img.id}`}
+                                                                className={`h-32 w-full object-cover rounded-lg ${marked ? 'opacity-40' : ''}`}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleDeleteExistingImage(img.id)}
+                                                                className={`absolute top-2 right-2 rounded-full px-3 py-1 text-xs text-white ${marked ? 'bg-gray-700' : 'bg-red-500'}`}
+                                                                title={marked ? 'Undo delete' : 'Mark for delete'}
+                                                            >
+                                                                {marked ? 'Undo' : 'Delete'}
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    ) : editFormData.existingImage ? (
-                                        <div className="relative mb-4">
-                                            <img
-                                                src={`https://localhost:7086${editFormData.existingImage}`}
-                                                alt="Current"
-                                                className="h-48 w-full object-cover rounded-lg opacity-50"
-                                            />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">
-                                                <p className="text-white font-medium">Existing image will be kept</p>
+                                    ) : null}
+
+                                    {Array.isArray(editFormData.newImages) && editFormData.newImages.length > 0 ? (
+                                        <div className="mb-4">
+                                            <p className="text-sm text-gray-600 mb-2">New images to upload</p>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                {editFormData.newImages.map((file, idx) => (
+                                                    <div key={`${file.name}-${file.size}-${idx}`} className="relative">
+                                                        <img
+                                                            src={URL.createObjectURL(file)}
+                                                            alt={`New preview ${idx + 1}`}
+                                                            className="h-32 w-full object-cover rounded-lg"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeNewEditImageAtIndex(idx)}
+                                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                                                            title="Remove"
+                                                        >
+                                                            <FaTimes size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     ) : null}
@@ -1251,19 +1318,20 @@ export default function ProjectsDataTable({ projects, loading, refetch }) {
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                             <FaImage className="w-8 h-8 mb-3 text-gray-400" />
                                             <p className="mb-2 text-sm text-gray-500">
-                                                <span className="font-semibold">Click to upload new image</span> (optional)
+                                                <span className="font-semibold">Click to upload new images</span> (optional)
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                If not provided, existing image will be kept
+                                                You can add multiple images
                                             </p>
                                         </div>
                                         <input
-                                            id="edit_ProjectImage"
-                                            name="ProjectImage"
+                                            id="edit_newImages"
+                                            name="newImages"
                                             type="file"
                                             className="hidden"
                                             onChange={handleEditFormChange}
                                             accept="image/*"
+                                            multiple
                                         />
                                     </label>
                                 </div>
