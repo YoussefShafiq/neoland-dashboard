@@ -727,7 +727,7 @@ export default function UnitsDataTable({
                                         <option value="">All Projects</option>
                                         {projects.map(project => (
                                             <option key={project.projectID} value={project.projectID}>
-                                                {project.projectDescEn}
+                                                {project.projectDescEN}
                                             </option>
                                         ))}
                                     </select>
@@ -1002,7 +1002,7 @@ export default function UnitsDataTable({
                                             <option value="">Select Project</option>
                                             {projects.map(project => (
                                                 <option key={project.projectID} value={project.projectID}>
-                                                    {project.projectDescEN} - {project.locationNameEN}
+                                                    {project.projectDescEN} - {project.projectDescAR}
                                                 </option>
                                             ))}
                                         </select>
@@ -1297,7 +1297,7 @@ export default function UnitsDataTable({
                                             <option value="">Select Project</option>
                                             {projects.map(project => (
                                                 <option key={project.projectID} value={project.projectID}>
-                                                    {project.projectDescEN} - {project.locationNameEN}
+                                                    {project.projectDescEN} - {project.projectDescAR}
                                                 </option>
                                             ))}
                                         </select>
