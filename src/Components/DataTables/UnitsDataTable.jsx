@@ -1002,7 +1002,7 @@ export default function UnitsDataTable({
                                             <option value="">Select Project</option>
                                             {projects.map(project => (
                                                 <option key={project.projectID} value={project.projectID}>
-                                                    {project.projectDescEN} - {project.projectDescAR}
+                                                    {project.projectDescEn} - {project.projectDescAr}
                                                 </option>
                                             ))}
                                         </select>
